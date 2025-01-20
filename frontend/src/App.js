@@ -1,6 +1,8 @@
 // frontend/src/App.js
 
-import React, { useEffect, useState, useCallback } from 'react';
+import 'reactflow/dist/style.css';
+
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import ReactFlow, {
   addEdge,
   useNodesState,
@@ -9,10 +11,9 @@ import ReactFlow, {
   MiniMap,
   Background,
   ReactFlowProvider,
-} from 'react-flow-renderer';
+} from 'reactflow';
 import axios from 'axios';
 import './App.css';
-
 // Define node types for drag and drop
 const nodeTypesList = [
   { type: 'TypeA', label: 'Type A' },
@@ -29,6 +30,7 @@ function Sidebar() {
   const onDragStart = (event, nodeType) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
+    console.log(`Drag started for node type: ${nodeType}`);
   };
 
   return (
@@ -52,14 +54,28 @@ function App() {
   // State management using React Flow hooks
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [reactFlowInstance, setReactFlowInstance] = useState(null);
+  const reactFlowInstance = useRef(null);
   const [nodeTitle, setNodeTitle] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+  const [contextMenu, setContextMenu] = useState(null);
+  const [selectedNode, setSelectedNode] = useState(null);
 
   // Fetch the tree data from backend on component mount
   useEffect(() => {
     fetchTree();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const handleClick = () => {
+      setContextMenu(null);
+      setSelectedNode(null);
+    };
+
+    window.addEventListener('click', handleClick);
+    return () => {
+      window.removeEventListener('click', handleClick);
+    };
   }, []);
 
   // Function to fetch the entire tree from the backend
@@ -148,12 +164,15 @@ function App() {
   };
 
   // Handler for loading React Flow instance
-  const onLoadHandler = (rfi) => setReactFlowInstance(rfi);
+  const onLoadHandler = useCallback((instance) => {
+    reactFlowInstance.current = instance;
+    console.log('React Flow instance loaded:', instance);
+  }, []);
 
   // Function to save the current tree state to the backend
   const saveTree = async () => {
-    if (reactFlowInstance) {
-      const flow = reactFlowInstance.toObject();
+    if (reactFlowInstance.current) {
+      const flow = reactFlowInstance.current.toObject();
       const nodesData = flow.nodes.map((node) => ({
         _id: node.id,
         title: node.data.label,
@@ -212,32 +231,99 @@ function App() {
   const onDrop = useCallback(
     (event) => {
       event.preventDefault();
+      console.log('Drop event triggered');
 
-      if (!reactFlowInstance) return;
-
-      const reactFlowBounds = document.querySelector('.react-flow-wrapper').getBoundingClientRect();
-      const type = event.dataTransfer.getData('application/reactflow');
-
-      // Check if the dropped element is valid
-      if (typeof type === 'undefined' || !type) {
+      if (!reactFlowInstance.current) {
+        console.log('React Flow instance not set');
         return;
       }
 
-      const position = reactFlowInstance.project({
+      const reactFlowBounds = document.querySelector('.react-flow-wrapper').getBoundingClientRect();
+      const type = event.dataTransfer.getData('application/reactflow');
+      console.log(`Dropped node type: ${type}`);
+
+      if (!type) {
+        console.log('No node type found in dataTransfer');
+        return;
+      }
+
+      const position = reactFlowInstance.current.project({
         x: event.clientX - reactFlowBounds.left,
         y: event.clientY - reactFlowBounds.top,
       });
+      console.log('Calculated position:', position);
 
       const nodeTitle = `${type} Node`;
+      let nodeStyle = {};
+
+      switch (type) {
+        case 'TypeA':
+          nodeStyle = {
+            backgroundColor: '#FFD700',
+            color: '#000',
+            padding: '10px',
+            borderRadius: '5px',
+            border: '1px solid #222',
+            width: '150px',
+            textAlign: 'center',
+          }; // Gold
+          break;
+        case 'TypeB':
+          nodeStyle = {
+            backgroundColor: '#ADFF2F',
+            color: '#000',
+            padding: '10px',
+            borderRadius: '5px',
+            border: '1px solid #222',
+            width: '150px',
+            textAlign: 'center',
+          }; // GreenYellow
+          break;
+        case 'TypeC':
+          nodeStyle = {
+            backgroundColor: '#FF69B4',
+            color: '#000',
+            padding: '10px',
+            borderRadius: '5px',
+            border: '1px solid #222',
+            width: '150px',
+            textAlign: 'center',
+          }; // HotPink
+          break;
+        case 'central':
+          nodeStyle = {
+            backgroundColor: '#FFF',
+            color: '#000',
+            padding: '10px',
+            borderRadius: '5px',
+            border: '2px solid #104E8B',
+            width: '150px',
+            textAlign: 'center',
+          }; // DodgerBlue
+          break;
+        default:
+          nodeStyle = {
+            backgroundColor: '#fff',
+            color: '#000',
+            padding: '10px',
+            borderRadius: '5px',
+            border: '1px solid #222',
+            width: '150px',
+            textAlign: 'center',
+          }; // Default
+      }
 
       const newNode = {
         id: `${+new Date()}`,
         type: type === 'central' ? 'central' : 'default',
         position,
         data: { label: nodeTitle },
+        style: nodeStyle,
       };
 
-      setNodes((nds) => nds.concat(newNode));
+      console.log('Adding new node:', newNode);
+
+      setNodes((nds) => [...nds, newNode]);
 
       // Optionally, connect the new node to the nearest node
       if (nodes.length > 0) {
@@ -254,10 +340,13 @@ function App() {
             animated: true,
           };
           setEdges((eds) => addEdge(newEdge, eds));
+          console.log('Connecting to nearest node:', nearestNode.id);
         }
       }
+
+      console.log('Nodes after addition:', nodes);
     },
-    [nodes, reactFlowInstance]
+    [nodes]
   );
 
   // Handler to allow dropping
@@ -265,6 +354,36 @@ function App() {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
   }, []);
+
+  const onNodeContextMenu = useCallback((event, node) => {
+    event.preventDefault();
+    setSelectedNode(node);
+    setContextMenu({
+      mouseX: event.clientX - 2,
+      mouseY: event.clientY - 4,
+    });
+  }, []);
+
+  const handleDelete = async () => {
+    if (selectedNode) {
+      try {
+        // Remove the node from state
+        setNodes((nds) => nds.filter((node) => node.id !== selectedNode.id));
+        setEdges((eds) => eds.filter((edge) => edge.source !== selectedNode.id && edge.target !== selectedNode.id));
+
+        // Delete the node from the backend
+        await axios.delete(`/api/thinking-trees/${selectedNode.id}`);
+        console.log(`Node ${selectedNode.id} deleted successfully.`);
+      } catch (error) {
+        console.error('Error deleting node:', error);
+        alert('Failed to delete node.');
+      } finally {
+        // Close the context menu
+        setContextMenu(null);
+        setSelectedNode(null);
+      }
+    }
+  };
 
   return (
     <ReactFlowProvider>
@@ -315,6 +434,7 @@ function App() {
               onEdgesChange={onEdgesChange}
               onConnect={onConnectHandler}
               onElementsRemove={onElementsRemoveHandler}
+              onNodeContextMenu={onNodeContextMenu} // Add this line
               onLoad={onLoadHandler}
               deleteKeyCode={46} /* 'delete'-key */
               snapToGrid={true}
@@ -326,6 +446,31 @@ function App() {
               <Background />
             </ReactFlow>
           </div>
+          {contextMenu ? (
+            <div
+              className="context-menu"
+              style={{
+                top: contextMenu.mouseY,
+                left: contextMenu.mouseX,
+                position: 'absolute',
+                backgroundColor: '#fff',
+                boxShadow: '0px 0px 5px rgba(0,0,0,0.2)',
+                borderRadius: '5px',
+                zIndex: 1000,
+              }}
+            >
+              <div
+                className="context-menu-item"
+                onClick={handleDelete}
+                style={{
+                  padding: '8px 12px',
+                  cursor: 'pointer',
+                }}
+              >
+                Delete
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     </ReactFlowProvider>
