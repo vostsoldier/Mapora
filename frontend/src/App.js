@@ -1,5 +1,3 @@
-// frontend/src/App.js
-
 import 'reactflow/dist/style.css';
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
@@ -14,18 +12,13 @@ import ReactFlow, {
 } from 'reactflow';
 import axios from 'axios';
 import './App.css';
-// Define node types for drag and drop
 const nodeTypesList = [
   { type: 'TypeA', label: 'Type A' },
   { type: 'TypeB', label: 'Type B' },
   { type: 'TypeC', label: 'Type C' },
 ];
-
-// Initial empty states
 const initialNodes = [];
 const initialEdges = [];
-
-// Sidebar Component for Drag & Drop Node Types
 function Sidebar() {
   const onDragStart = (event, nodeType) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
@@ -51,7 +44,6 @@ function Sidebar() {
 }
 
 function App() {
-  // State management using React Flow hooks
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const reactFlowInstance = useRef(null);
@@ -59,11 +51,8 @@ function App() {
   const [isAdding, setIsAdding] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
   const [selectedNode, setSelectedNode] = useState(null);
-
-  // Fetch the tree data from backend on component mount
   useEffect(() => {
     fetchTree();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -77,8 +66,6 @@ function App() {
       window.removeEventListener('click', handleClick);
     };
   }, []);
-
-  // Function to fetch the entire tree from the backend
   const fetchTree = async () => {
     try {
       const response = await axios.get('/api/thinking-trees/full-tree');
@@ -107,8 +94,6 @@ function App() {
       };
 
       tree.forEach((rootNode) => processNode(rootNode));
-
-      // If no nodes exist, add a central node
       if (flowNodes.length === 0) {
         addCentralNode(flowNodes, flowEdges);
       } else {
@@ -119,8 +104,6 @@ function App() {
       console.error('Error fetching tree:', error);
     }
   };
-
-  // Function to add a central node if the tree is empty
   const addCentralNode = async (flowNodes, flowEdges) => {
     try {
       const response = await axios.post('/api/thinking-trees', {
@@ -142,11 +125,7 @@ function App() {
       console.error('Error adding central node:', error);
     }
   };
-
-  // Handler for connecting nodes (edges)
   const onConnectHandler = (params) => setEdges((eds) => addEdge(params, eds));
-
-  // Handler for removing nodes and edges
   const onElementsRemoveHandler = (elementsToRemove) => {
     const nodesToRemove = elementsToRemove.filter((el) => !el.source);
     const edgesToRemove = elementsToRemove.filter((el) => el.source);
@@ -162,14 +141,10 @@ function App() {
       }
     });
   };
-
-  // Handler for loading React Flow instance
   const onLoadHandler = useCallback((instance) => {
     reactFlowInstance.current = instance;
     console.log('React Flow instance loaded:', instance);
   }, []);
-
-  // Function to save the current tree state to the backend
   const saveTree = async () => {
     if (reactFlowInstance.current) {
       const flow = reactFlowInstance.current.toObject();
@@ -193,8 +168,6 @@ function App() {
       }
     }
   };
-
-  // Function to add a new node via the modal
   const addNode = async () => {
     if (!nodeTitle.trim()) {
       alert('Node title cannot be empty.');
@@ -226,8 +199,6 @@ function App() {
       alert('Failed to add node.');
     }
   };
-
-  // Handler for dropping a node type onto the canvas
   const onDrop = useCallback(
     (event) => {
       event.preventDefault();
@@ -324,8 +295,6 @@ function App() {
       console.log('Adding new node:', newNode);
 
       setNodes((nds) => [...nds, newNode]);
-
-      // Optionally, connect the new node to the nearest node
       if (nodes.length > 0) {
         const nearestNode = nodes.find(
           (node) =>
@@ -348,8 +317,6 @@ function App() {
     },
     [nodes]
   );
-
-  // Handler to allow dropping
   const onDragOver = useCallback((event) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
@@ -367,23 +334,37 @@ function App() {
   const handleDelete = async () => {
     if (selectedNode) {
       try {
-        // Remove the node from state
         setNodes((nds) => nds.filter((node) => node.id !== selectedNode.id));
         setEdges((eds) => eds.filter((edge) => edge.source !== selectedNode.id && edge.target !== selectedNode.id));
-
-        // Delete the node from the backend
         await axios.delete(`/api/thinking-trees/${selectedNode.id}`);
         console.log(`Node ${selectedNode.id} deleted successfully.`);
       } catch (error) {
         console.error('Error deleting node:', error);
         alert('Failed to delete node.');
       } finally {
-        // Close the context menu
         setContextMenu(null);
         setSelectedNode(null);
       }
     }
   };
+  const onNodeDragStopHandler = useCallback(
+    async (event, node) => {
+      const { id, position } = node;
+      console.log(`Node ${id} moved to`, position);
+      
+      try {
+        await axios.put(`/api/thinking-trees/${id}/position`, {
+          x: position.x,
+          y: position.y,
+        });
+        console.log(`Position of node ${id} updated successfully.`);
+      } catch (error) {
+        console.error(`Error updating position of node ${id}:`, error);
+        alert('Failed to update node position.');
+      }
+    },
+    []
+  );
 
   return (
     <ReactFlowProvider>
@@ -434,9 +415,10 @@ function App() {
               onEdgesChange={onEdgesChange}
               onConnect={onConnectHandler}
               onElementsRemove={onElementsRemoveHandler}
-              onNodeContextMenu={onNodeContextMenu} // Add this line
+              onNodeContextMenu={onNodeContextMenu}
+              onNodeDragStop={onNodeDragStopHandler}
               onLoad={onLoadHandler}
-              deleteKeyCode={46} /* 'delete'-key */
+              deleteKeyCode={46} 
               snapToGrid={true}
               snapGrid={[15, 15]}
               fitView

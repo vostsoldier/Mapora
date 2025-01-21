@@ -29,12 +29,10 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Get the entire Think Tree
 router.get('/full-tree', async (req, res) => {
   try {
     const nodes = await ThinkTreeNode.find().lean();
 
-    // Convert flat list to tree
     const nodeMap = {};
     nodes.forEach(node => {
       node.children = [];
@@ -80,7 +78,6 @@ router.put('/bulk-update', async (req, res) => {
   }
 });
 
-// Delete a Think Tree node and its descendants
 router.delete('/:id', async (req, res) => {
   try {
     const deleteNodeAndChildren = async (nodeId) => {
@@ -98,6 +95,31 @@ router.delete('/:id', async (req, res) => {
     res.json({ message: 'Node and its children deleted' });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+router.put('/:id/position', async (req, res) => {
+  const { x, y } = req.body;
+
+  if (typeof x !== 'number' || typeof y !== 'number') {
+    return res.status(400).json({ message: 'Invalid position data' });
+  }
+
+  try {
+    const updatedNode = await ThinkTreeNode.findByIdAndUpdate(
+      req.params.id,
+      { position: { x, y } },
+      { new: true }
+    );
+
+    if (!updatedNode) {
+      return res.status(404).json({ message: 'Node not found' });
+    }
+
+    res.json(updatedNode);
+  } catch (err) {
+    console.error('Error updating node position:', err);
+    res.status(500).json({ message: 'Server error updating position' });
   }
 });
 
