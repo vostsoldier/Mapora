@@ -58,7 +58,6 @@ router.put('/bulk-update', async (req, res) => {
   const { nodes } = req.body;
 
   try {
-    // Step 1: Update the parent fields of all nodes
     const bulkOperations = nodes.map((node) => ({
       updateOne: {
         filter: { _id: node._id },

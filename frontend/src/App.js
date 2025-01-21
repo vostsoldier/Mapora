@@ -32,6 +32,8 @@ function App() {
   const [selectedNode, setSelectedNode] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
+  const [edgeContextMenu, setEdgeContextMenu] = useState(null);
+  const [selectedEdge, setSelectedEdge] = useState(null);
 
   useEffect(() => {
     fetchTree();
@@ -41,6 +43,8 @@ function App() {
     const handleClick = () => {
       setContextMenu(null);
       setSelectedNode(null);
+      setEdgeContextMenu(null);
+      setSelectedEdge(null);
     };
 
     window.addEventListener('click', handleClick);
@@ -215,6 +219,7 @@ function App() {
 
   const onNodeContextMenu = useCallback((event, node) => {
     event.preventDefault();
+    event.stopPropagation(); 
     setSelectedNode(node);
     setContextMenu({
       mouseX: event.clientX - 2,
@@ -301,6 +306,60 @@ function App() {
     setEditedTitle('');
   };
 
+  const onEdgeClickHandler = useCallback((event, edge) => {
+    event.preventDefault();
+    event.stopPropagation(); 
+    setSelectedEdge(edge);
+    setEdgeContextMenu({
+      mouseX: event.clientX - 2,
+      mouseY: event.clientY - 4,
+    });
+  }, []);
+
+  const handleEdgeDelete = async () => {
+    if (selectedEdge) {
+      try {
+        setEdges((eds) => eds.filter((e) => e.id !== selectedEdge.id));
+        await axios.put(`/api/thinking-trees/${selectedEdge.target}/parent`, {
+          parentId: null,
+        });
+
+        console.log(`Edge ${selectedEdge.id} deleted successfully.`);
+      } catch (error) {
+        console.error('Error deleting edge:', error);
+        alert('Failed to delete edge.');
+      } finally {
+        setEdgeContextMenu(null);
+        setSelectedEdge(null);
+      }
+    }
+  };
+  const handleEdgeReverse = async () => {
+    if (selectedEdge) {
+      try {
+        const { source, target } = selectedEdge;
+        await axios.put(`/api/thinking-trees/${source}/parent`, {
+          parentId: target,
+        });
+        setEdges((eds) =>
+          eds.map((e) =>
+            e.id === selectedEdge.id
+              ? { ...e, source: target, target: source }
+              : e
+          )
+        );
+
+        console.log(`Edge ${selectedEdge.id} reversed successfully.`);
+      } catch (error) {
+        console.error('Error reversing edge:', error);
+        alert('Failed to reverse edge.');
+      } finally {
+        setEdgeContextMenu(null);
+        setSelectedEdge(null);
+      }
+    }
+  };
+
   return (
     <ReactFlowProvider>
       <div className="wrapper">
@@ -319,7 +378,7 @@ function App() {
           </header>
           {isAdding && (
             <div className="modal">
-              <div className="modal-content">
+              <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <h2>Add New Node</h2>
                 <input
                   type="text"
@@ -340,7 +399,7 @@ function App() {
           )}
           {isEditing && (
             <div className="modal">
-              <div className="modal-content">
+              <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <h2>Edit Node Title</h2>
                 <input
                   type="text"
@@ -368,6 +427,7 @@ function App() {
               onConnect={onConnectHandler}
               onElementsRemove={onElementsRemoveHandler}
               onNodeContextMenu={onNodeContextMenu}
+              onEdgeClick={onEdgeClickHandler}
               onNodeDragStop={onNodeDragStopHandler}
               onLoad={onLoadHandler}
               deleteKeyCode={46}
@@ -392,6 +452,7 @@ function App() {
                 borderRadius: '5px',
                 zIndex: 1000,
               }}
+              onClick={(e) => e.stopPropagation()} 
             >
               <div
                 className="context-menu-item"
@@ -412,6 +473,42 @@ function App() {
                 }}
               >
                 Delete
+              </div>
+            </div>
+          ) : null}
+          {edgeContextMenu ? (
+            <div
+              className="context-menu"
+              style={{
+                top: edgeContextMenu.mouseY,
+                left: edgeContextMenu.mouseX,
+                position: 'absolute',
+                backgroundColor: '#fff',
+                boxShadow: '0px 0px 5px rgba(0,0,0,0.2)',
+                borderRadius: '5px',
+                zIndex: 1000,
+              }}
+              onClick={(e) => e.stopPropagation()} 
+            >
+              <div
+                className="context-menu-item"
+                onClick={handleEdgeDelete}
+                style={{
+                  padding: '8px 12px',
+                  cursor: 'pointer',
+                }}
+              >
+                Delete
+              </div>
+              <div
+                className="context-menu-item"
+                onClick={handleEdgeReverse}
+                style={{
+                  padding: '8px 12px',
+                  cursor: 'pointer',
+                }}
+              >
+                Reverse
               </div>
             </div>
           ) : null}
