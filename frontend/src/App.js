@@ -127,7 +127,8 @@ function App() {
         addEdge(
           {
             ...params,
-            reverseAnimated: false, 
+            animated: true, 
+            reverseAnimated: false,
             style: { animationDirection: 'normal' },
           },
           eds
@@ -235,12 +236,13 @@ function App() {
 
   const onNodeContextMenu = useCallback((event, node) => {
     event.preventDefault();
-    event.stopPropagation(); 
+    event.stopPropagation();
     setSelectedNode(node);
     setContextMenu({
       mouseX: event.clientX - 2,
       mouseY: event.clientY - 4,
     });
+    setEdgeContextMenu(null); 
   }, []);
 
   const handleDelete = async () => {
@@ -324,12 +326,13 @@ function App() {
 
   const onEdgeClickHandler = useCallback((event, edge) => {
     event.preventDefault();
-    event.stopPropagation(); 
+    event.stopPropagation();
     setSelectedEdge(edge);
     setEdgeContextMenu({
       mouseX: event.clientX - 2,
       mouseY: event.clientY - 4,
     });
+    setContextMenu(null);
   }, []);
 
   const handleEdgeDelete = async () => {
