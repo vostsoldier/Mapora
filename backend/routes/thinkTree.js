@@ -251,28 +251,28 @@ router.delete('/:id', async (req, res) => {
       if (!node) return;
       await ThinkTreeEdge.deleteMany({ source: nodeId });
       await ThinkTreeEdge.deleteMany({ target: nodeId });
-
       for (const childId of node.children) {
         await deleteNodeAndChildren(childId);
       }
-
-      if (node.parent) {
-        await ThinkTreeNode.findByIdAndUpdate(node.parent, {
-          $pull: { children: node._id },
-        });
-        await ThinkTreeEdge.findOneAndDelete({
-          source: node.parent,
-          target: node._id,
-        });
+      if (node.parents && node.parents.length > 0) {
+        for (const parentId of node.parents) {
+          await ThinkTreeNode.findByIdAndUpdate(parentId, {
+            $pull: { children: node._id },
+          });
+          await ThinkTreeEdge.findOneAndDelete({
+            source: parentId,
+            target: node._id,
+          });
+        }
       }
-
       await ThinkTreeNode.findByIdAndDelete(nodeId);
     };
 
     await deleteNodeAndChildren(req.params.id);
-    res.json({ message: 'Node and its children deleted' });
+    res.json({ message: 'Node and its children deleted successfully.' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Error deleting node:', err);
+    res.status(500).json({ message: 'Failed to delete node.' });
   }
 });
 router.put('/edges/:id/reverse-animation', async (req, res) => {
