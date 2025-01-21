@@ -14,14 +14,20 @@ const ThinkTreeNodeSchema = new mongoose.Schema({
       ref: 'ThinkTreeNode',
     },
   ],
-  parent: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'ThinkTreeNode',
-    default: null,
-  },
+  parents: [ 
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ThinkTreeNode',
+      default: [], 
+    },
+  ],
   position: {
     x: { type: Number, default: 0 },
     y: { type: Number, default: 0 },
+  },
+  type: {
+    type: String,
+    default: 'default',
   },
   createdAt: {
     type: Date,

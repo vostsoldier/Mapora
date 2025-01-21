@@ -104,7 +104,7 @@ function App() {
       const response = await axios.post('/api/thinking-trees', {
         title: 'Central Node',
         content: '',
-        parentId: null,
+        parentIds: [], 
         position: { x: 250, y: 250 },
         type: 'central',
       });
@@ -174,7 +174,9 @@ function App() {
         _id: node.id,
         title: node.data.label,
         content: '',
-        parent: edges.find((edge) => edge.target === node.id)?.source || null,
+        parents: edges
+          .filter(edge => edge.target === node.id)
+          .map(edge => edge.source),
         position: node.position,
         type: node.type || 'default',
       }));
@@ -212,7 +214,7 @@ function App() {
       const response = await axios.post('/api/thinking-trees', {
         title: nodeTitle,
         content: '',
-        parentId: null,
+        parentIds: [], 
         position: { x: Math.random() * 250, y: Math.random() * 250 },
         type: 'default',
       });
@@ -332,14 +334,14 @@ function App() {
       mouseX: event.clientX - 2,
       mouseY: event.clientY - 4,
     });
-    setContextMenu(null);
+    setContextMenu(null); 
   }, []);
 
   const handleEdgeDelete = async () => {
     if (selectedEdge) {
       try {
-        await axios.put(`/api/thinking-trees/${selectedEdge.target}/parent`, {
-          parentId: null,
+        await axios.put(`/api/thinking-trees/edges/${selectedEdge.id}/remove-parent`, {
+          parentId: selectedEdge.source,
         });
         setEdges((eds) => eds.filter((e) => e.id !== selectedEdge.id));
 
