@@ -2,9 +2,8 @@ const express = require('express');
 const router = express.Router();
 const ThinkTreeNode = require('../models/ThinkTreeNode');
 
-
 router.post('/', async (req, res) => {
-  const { title, content, parentId, position } = req.body;
+  const { title, content, parentId, position, type } = req.body;
 
   try {
     const newNode = new ThinkTreeNode({
@@ -12,10 +11,10 @@ router.post('/', async (req, res) => {
       content,
       parent: parentId || null,
       position: position || { x: 0, y: 0 },
+      type: type || 'default',
     });
 
     const savedNode = await newNode.save();
-
 
     if (parentId) {
       const parentNode = await ThinkTreeNode.findById(parentId);
@@ -59,25 +58,84 @@ router.put('/bulk-update', async (req, res) => {
   const { nodes } = req.body;
 
   try {
-    const bulkOperations = nodes.map(node => ({
+    // Step 1: Update the parent fields of all nodes
+    const bulkOperations = nodes.map((node) => ({
       updateOne: {
         filter: { _id: node._id },
-        update: { 
+        update: {
           title: node.title,
           content: node.content,
           parent: node.parent || null,
           position: node.position || { x: 0, y: 0 },
+          type: node.type || 'default',
         },
       },
     }));
 
     await ThinkTreeNode.bulkWrite(bulkOperations);
-    res.json({ message: 'Nodes updated successfully' });
+    console.log('Parent fields updated successfully.');
+
+    await ThinkTreeNode.updateMany({}, { children: [] });
+    console.log('Children arrays reset.');
+    const allNodes = await ThinkTreeNode.find().select('_id parent').lean();
+    const parentChildrenMap = {};
+
+    allNodes.forEach((node) => {
+      if (node.parent) {
+        if (!parentChildrenMap[node.parent]) {
+          parentChildrenMap[node.parent] = [];
+        }
+        parentChildrenMap[node.parent].push(node._id);
+      }
+    });
+
+    const childUpdateOperations = Object.entries(parentChildrenMap).map(
+      ([parentId, children]) => ({
+        updateOne: {
+          filter: { _id: parentId },
+          update: { children: children },
+        },
+      })
+    );
+
+    if (childUpdateOperations.length > 0) {
+      await ThinkTreeNode.bulkWrite(childUpdateOperations);
+      console.log('Children fields updated based on parent relationships.');
+    }
+
+    res.json({ message: 'Nodes and their relationships updated successfully.' });
   } catch (err) {
+    console.error('Error in bulk-update:', err);
     res.status(400).json({ message: err.message });
   }
 });
+router.put('/:id/parent', async (req, res) => {
+  const { parentId } = req.body;
 
+  try {
+    const node = await ThinkTreeNode.findById(req.params.id);
+    if (!node) {
+      return res.status(404).json({ message: 'Node not found' });
+    }
+    if (node.parent) {
+      await ThinkTreeNode.findByIdAndUpdate(node.parent, {
+        $pull: { children: node._id },
+      });
+    }
+    node.parent = parentId || null;
+    await node.save();
+    if (parentId) {
+      await ThinkTreeNode.findByIdAndUpdate(parentId, {
+        $addToSet: { children: node._id },
+      });
+    }
+
+    res.json({ message: 'Parent updated successfully', node });
+  } catch (err) {
+    console.error('Error updating parent:', err);
+    res.status(500).json({ message: 'Server error updating parent' });
+  }
+});
 router.delete('/:id', async (req, res) => {
   try {
     const deleteNodeAndChildren = async (nodeId) => {
@@ -86,6 +144,11 @@ router.delete('/:id', async (req, res) => {
 
       for (const childId of node.children) {
         await deleteNodeAndChildren(childId);
+      }
+      if (node.parent) {
+        await ThinkTreeNode.findByIdAndUpdate(node.parent, {
+          $pull: { children: node._id },
+        });
       }
 
       await ThinkTreeNode.findByIdAndDelete(nodeId);

@@ -12,40 +12,19 @@ import ReactFlow, {
 } from 'reactflow';
 import axios from 'axios';
 import './App.css';
-const nodeTypesList = [
-  { type: 'TypeA', label: 'Type A' },
-  { type: 'TypeB', label: 'Type B' },
-  { type: 'TypeC', label: 'Type C' },
-];
-const initialNodes = [];
-const initialEdges = [];
-function Sidebar() {
-  const onDragStart = (event, nodeType) => {
-    event.dataTransfer.setData('application/reactflow', nodeType);
-    event.dataTransfer.effectAllowed = 'move';
-    console.log(`Drag started for node type: ${nodeType}`);
-  };
+import debounce from 'lodash.debounce';
 
+function Sidebar() {
   return (
     <aside>
-      <div className="description">Drag these nodes to the canvas:</div>
-      {nodeTypesList.map((node) => (
-        <div
-          key={node.type}
-          className="dndnode"
-          onDragStart={(event) => onDragStart(event, node.type)}
-          draggable
-        >
-          {node.label}
-        </div>
-      ))}
+      <div className="description">Use the "Add Node" button to create nodes.</div>
     </aside>
   );
 }
 
 function App() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const reactFlowInstance = useRef(null);
   const [nodeTitle, setNodeTitle] = useState('');
   const [isAdding, setIsAdding] = useState(false);
@@ -53,6 +32,7 @@ function App() {
   const [selectedNode, setSelectedNode] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
+
   useEffect(() => {
     fetchTree();
   }, []);
@@ -68,6 +48,7 @@ function App() {
       window.removeEventListener('click', handleClick);
     };
   }, []);
+
   const fetchTree = async () => {
     try {
       const response = await axios.get('/api/thinking-trees/full-tree');
@@ -106,6 +87,7 @@ function App() {
       console.error('Error fetching tree:', error);
     }
   };
+
   const addCentralNode = async (flowNodes, flowEdges) => {
     try {
       const response = await axios.post('/api/thinking-trees', {
@@ -127,7 +109,23 @@ function App() {
       console.error('Error adding central node:', error);
     }
   };
-  const onConnectHandler = (params) => setEdges((eds) => addEdge(params, eds));
+
+  const onConnectHandler = useCallback(
+    async (params) => {
+      setEdges((eds) => addEdge(params, eds));
+      try {
+        await axios.put(`/api/thinking-trees/${params.target}/parent`, {
+          parentId: params.source,
+        });
+        console.log(`Updated parent of node ${params.target} to ${params.source}`);
+      } catch (error) {
+        console.error('Error updating parent node:', error);
+        alert('Failed to update parent node.');
+      }
+    },
+    []
+  );
+
   const onElementsRemoveHandler = (elementsToRemove) => {
     const nodesToRemove = elementsToRemove.filter((el) => !el.source);
     const edgesToRemove = elementsToRemove.filter((el) => el.source);
@@ -143,14 +141,15 @@ function App() {
       }
     });
   };
+
   const onLoadHandler = useCallback((instance) => {
     reactFlowInstance.current = instance;
     console.log('React Flow instance loaded:', instance);
   }, []);
-  const saveTree = async () => {
-    if (reactFlowInstance.current) {
-      const flow = reactFlowInstance.current.toObject();
-      const nodesData = flow.nodes.map((node) => ({
+
+  const saveTree = useCallback(async () => {
+    try {
+      const nodesData = nodes.map((node) => ({
         _id: node.id,
         title: node.data.label,
         content: '',
@@ -159,17 +158,29 @@ function App() {
         type: node.type || 'default',
       }));
 
-      try {
-        await axios.put('/api/thinking-trees/bulk-update', {
-          nodes: nodesData,
-        });
-        alert('Tree saved successfully!');
-      } catch (error) {
-        console.error('Error saving tree:', error);
-        alert('Failed to save tree.');
-      }
+      await axios.put('/api/thinking-trees/bulk-update', {
+        nodes: nodesData,
+      });
+      console.log('Tree saved successfully!');
+    } catch (error) {
+      console.error('Error saving tree:', error);
+      alert('Failed to save tree.');
     }
-  };
+  }, [nodes, edges]);
+
+  const debouncedSaveTree = useCallback(
+    debounce(async () => {
+      await saveTree();
+    }, 1000),
+    [saveTree]
+  );
+
+  useEffect(() => {
+    debouncedSaveTree();
+
+    return debouncedSaveTree.cancel;
+  }, [nodes, edges, debouncedSaveTree]);
+
   const addNode = async () => {
     if (!nodeTitle.trim()) {
       alert('Node title cannot be empty.');
@@ -201,128 +212,6 @@ function App() {
       alert('Failed to add node.');
     }
   };
-  const onDrop = useCallback(
-    (event) => {
-      event.preventDefault();
-      console.log('Drop event triggered');
-
-      if (!reactFlowInstance.current) {
-        console.log('React Flow instance not set');
-        return;
-      }
-
-      const reactFlowBounds = document.querySelector('.react-flow-wrapper').getBoundingClientRect();
-      const type = event.dataTransfer.getData('application/reactflow');
-      console.log(`Dropped node type: ${type}`);
-
-      if (!type) {
-        console.log('No node type found in dataTransfer');
-        return;
-      }
-
-      const position = reactFlowInstance.current.project({
-        x: event.clientX - reactFlowBounds.left,
-        y: event.clientY - reactFlowBounds.top,
-      });
-      console.log('Calculated position:', position);
-
-      const nodeTitle = `${type} Node`;
-      let nodeStyle = {};
-
-      switch (type) {
-        case 'TypeA':
-          nodeStyle = {
-            backgroundColor: '#FFD700',
-            color: '#000',
-            padding: '10px',
-            borderRadius: '5px',
-            border: '1px solid #222',
-            width: '150px',
-            textAlign: 'center',
-          }; // Gold
-          break;
-        case 'TypeB':
-          nodeStyle = {
-            backgroundColor: '#ADFF2F',
-            color: '#000',
-            padding: '10px',
-            borderRadius: '5px',
-            border: '1px solid #222',
-            width: '150px',
-            textAlign: 'center',
-          }; // GreenYellow
-          break;
-        case 'TypeC':
-          nodeStyle = {
-            backgroundColor: '#FF69B4',
-            color: '#000',
-            padding: '10px',
-            borderRadius: '5px',
-            border: '1px solid #222',
-            width: '150px',
-            textAlign: 'center',
-          }; // HotPink
-          break;
-        case 'central':
-          nodeStyle = {
-            backgroundColor: '#FFF',
-            color: '#000',
-            padding: '10px',
-            borderRadius: '5px',
-            border: '2px solid #104E8B',
-            width: '150px',
-            textAlign: 'center',
-          }; // DodgerBlue
-          break;
-        default:
-          nodeStyle = {
-            backgroundColor: '#fff',
-            color: '#000',
-            padding: '10px',
-            borderRadius: '5px',
-            border: '1px solid #222',
-            width: '150px',
-            textAlign: 'center',
-          }; // Default
-      }
-
-      const newNode = {
-        id: `${+new Date()}`,
-        type: type === 'central' ? 'central' : 'default',
-        position,
-        data: { label: nodeTitle },
-        style: nodeStyle,
-      };
-
-      console.log('Adding new node:', newNode);
-
-      setNodes((nds) => [...nds, newNode]);
-      if (nodes.length > 0) {
-        const nearestNode = nodes.find(
-          (node) =>
-            Math.abs(node.position.x - position.x) < 100 &&
-            Math.abs(node.position.y - position.y) < 100
-        );
-        if (nearestNode) {
-          const newEdge = {
-            id: `e${nearestNode.id}_to_${newNode.id}`,
-            source: nearestNode.id,
-            target: newNode.id,
-            animated: true,
-          };
-          setEdges((eds) => addEdge(newEdge, eds));
-          console.log('Connecting to nearest node:', nearestNode.id);
-        }
-      }
-
-      console.log('Nodes after addition:', nodes);
-    },
-    [nodes]
-  );
-  const onDragOver = useCallback((event) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-  }, []);
 
   const onNodeContextMenu = useCallback((event, node) => {
     event.preventDefault();
@@ -338,6 +227,7 @@ function App() {
       try {
         setNodes((nds) => nds.filter((node) => node.id !== selectedNode.id));
         setEdges((eds) => eds.filter((edge) => edge.source !== selectedNode.id && edge.target !== selectedNode.id));
+
         await axios.delete(`/api/thinking-trees/${selectedNode.id}`);
         console.log(`Node ${selectedNode.id} deleted successfully.`);
       } catch (error) {
@@ -349,11 +239,12 @@ function App() {
       }
     }
   };
+
   const onNodeDragStopHandler = useCallback(
     async (event, node) => {
       const { id, position } = node;
       console.log(`Node ${id} moved to`, position);
-      
+
       try {
         await axios.put(`/api/thinking-trees/${id}/position`, {
           x: position.x,
@@ -468,11 +359,7 @@ function App() {
               </div>
             </div>
           )}
-          <div
-            className="react-flow-wrapper"
-            onDrop={onDrop}
-            onDragOver={onDragOver}
-          >
+          <div className="react-flow-wrapper">
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -483,7 +370,7 @@ function App() {
               onNodeContextMenu={onNodeContextMenu}
               onNodeDragStop={onNodeDragStopHandler}
               onLoad={onLoadHandler}
-              deleteKeyCode={46} 
+              deleteKeyCode={46}
               snapToGrid={true}
               snapGrid={[15, 15]}
               fitView
