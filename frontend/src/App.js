@@ -51,6 +51,8 @@ function App() {
   const [isAdding, setIsAdding] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
   const [selectedNode, setSelectedNode] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
   useEffect(() => {
     fetchTree();
   }, []);
@@ -366,6 +368,48 @@ function App() {
     []
   );
 
+  const handleEdit = () => {
+    if (selectedNode) {
+      setEditedTitle(selectedNode.data.label);
+      setIsEditing(true);
+      setContextMenu(null);
+    }
+  };
+
+  const saveEditedTitle = async () => {
+    if (!editedTitle.trim()) {
+      alert('Node title cannot be empty.');
+      return;
+    }
+
+    try {
+      const response = await axios.put(`/api/thinking-trees/${selectedNode.id}/title`, {
+        title: editedTitle,
+      });
+      const updatedNode = response.data;
+
+      setNodes((nds) =>
+        nds.map((node) =>
+          node.id === updatedNode._id
+            ? { ...node, data: { ...node.data, label: updatedNode.title } }
+            : node
+        )
+      );
+
+      setIsEditing(false);
+      setSelectedNode(null);
+      alert('Node title updated successfully!');
+    } catch (error) {
+      console.error('Error updating node title:', error);
+      alert('Failed to update node title.');
+    }
+  };
+
+  const cancelEditing = () => {
+    setIsEditing(false);
+    setEditedTitle('');
+  };
+
   return (
     <ReactFlowProvider>
       <div className="wrapper">
@@ -397,6 +441,27 @@ function App() {
                     Add
                   </button>
                   <button className="btn cancel" onClick={() => setIsAdding(false)}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          {isEditing && (
+            <div className="modal">
+              <div className="modal-content">
+                <h2>Edit Node Title</h2>
+                <input
+                  type="text"
+                  value={editedTitle}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                  placeholder="Enter new node title"
+                />
+                <div className="modal-actions">
+                  <button className="btn" onClick={saveEditedTitle}>
+                    Save
+                  </button>
+                  <button className="btn cancel" onClick={cancelEditing}>
                     Cancel
                   </button>
                 </div>
@@ -441,6 +506,16 @@ function App() {
                 zIndex: 1000,
               }}
             >
+              <div
+                className="context-menu-item"
+                onClick={handleEdit}
+                style={{
+                  padding: '8px 12px',
+                  cursor: 'pointer',
+                }}
+              >
+                Edit
+              </div>
               <div
                 className="context-menu-item"
                 onClick={handleDelete}

@@ -123,4 +123,29 @@ router.put('/:id/position', async (req, res) => {
   }
 });
 
+router.put('/:id/title', async (req, res) => {
+  const { title } = req.body;
+
+  if (!title || typeof title !== 'string') {
+    return res.status(400).json({ message: 'Invalid title data' });
+  }
+
+  try {
+    const updatedNode = await ThinkTreeNode.findByIdAndUpdate(
+      req.params.id,
+      { title },
+      { new: true }
+    );
+
+    if (!updatedNode) {
+      return res.status(404).json({ message: 'Node not found' });
+    }
+
+    res.json(updatedNode);
+  } catch (err) {
+    console.error('Error updating node title:', err);
+    res.status(500).json({ message: 'Server error updating title' });
+  }
+});
+
 module.exports = router;

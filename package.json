@@ -1,0 +1,29 @@
+{
+  "name": "think-tree",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd backend && npm start",
+    "client": "cd frontend && npm start",
+    "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vostsoldier/Think-Tree.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/vostsoldier/Think-Tree/issues"
+  },
+  "homepage": "https://github.com/vostsoldier/Think-Tree#readme",
+  "description": "",
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
