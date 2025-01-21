@@ -74,6 +74,8 @@ function App() {
             source: parent,
             target: node._id,
             animated: true,
+            reverseAnimated: false,
+            style: { animationDirection: 'normal' }, 
           });
         }
 
@@ -116,7 +118,16 @@ function App() {
 
   const onConnectHandler = useCallback(
     async (params) => {
-      setEdges((eds) => addEdge(params, eds));
+      setEdges((eds) =>
+        addEdge(
+          {
+            ...params,
+            reverseAnimated: false, 
+            style: { animationDirection: 'normal' },
+          },
+          eds
+        )
+      );
       try {
         await axios.put(`/api/thinking-trees/${params.target}/parent`, {
           parentId: params.source,
@@ -334,25 +345,29 @@ function App() {
       }
     }
   };
+
   const handleEdgeReverse = async () => {
     if (selectedEdge) {
       try {
-        const { source, target } = selectedEdge;
-        await axios.put(`/api/thinking-trees/${source}/parent`, {
-          parentId: target,
-        });
         setEdges((eds) =>
           eds.map((e) =>
             e.id === selectedEdge.id
-              ? { ...e, source: target, target: source }
+              ? {
+                  ...e,
+                  reverseAnimated: !e.reverseAnimated,
+                  style: {
+                    ...e.style,
+                    animationDirection: !e.reverseAnimated ? 'reverse' : 'normal', 
+                  },
+                }
               : e
           )
         );
 
-        console.log(`Edge ${selectedEdge.id} reversed successfully.`);
+        console.log(`Edge ${selectedEdge.id} animation direction reversed.`);
       } catch (error) {
         console.error('Error reversing edge:', error);
-        alert('Failed to reverse edge.');
+        alert('Failed to reverse edge animation.');
       } finally {
         setEdgeContextMenu(null);
         setSelectedEdge(null);
