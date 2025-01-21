@@ -56,33 +56,38 @@ function App() {
   const fetchTree = async () => {
     try {
       const response = await axios.get('/api/thinking-trees/full-tree');
-      const tree = response.data;
+      const { tree, edges: fetchedEdges } = response.data;
       const flowNodes = [];
       const flowEdges = [];
 
-      const processNode = (node, parent = null) => {
+      const processNode = (node) => {
         flowNodes.push({
           id: node._id,
           data: { label: node.title },
           position: node.position || { x: Math.random() * 250, y: Math.random() * 250 },
           type: node.type || 'default',
         });
-
-        if (parent) {
-          flowEdges.push({
-            id: `e${parent}_to_${node._id}`,
-            source: parent,
-            target: node._id,
-            animated: true,
-            reverseAnimated: false,
-            style: { animationDirection: 'normal' }, 
-          });
-        }
-
-        node.children.forEach((child) => processNode(child, node._id));
       };
 
-      tree.forEach((rootNode) => processNode(rootNode));
+      const traverseTree = (nodes) => {
+        nodes.forEach(node => {
+          processNode(node);
+          traverseTree(node.children);
+        });
+      };
+
+      traverseTree(tree);
+      fetchedEdges.forEach(edge => {
+        flowEdges.push({
+          id: edge._id, 
+          source: edge.source,
+          target: edge.target,
+          animated: edge.animated,
+          reverseAnimated: edge.reverseAnimated,
+          style: { animationDirection: edge.reverseAnimated ? 'reverse' : 'normal' },
+        });
+      });
+
       if (flowNodes.length === 0) {
         addCentralNode(flowNodes, flowEdges);
       } else {
@@ -330,10 +335,10 @@ function App() {
   const handleEdgeDelete = async () => {
     if (selectedEdge) {
       try {
-        setEdges((eds) => eds.filter((e) => e.id !== selectedEdge.id));
         await axios.put(`/api/thinking-trees/${selectedEdge.target}/parent`, {
           parentId: null,
         });
+        setEdges((eds) => eds.filter((e) => e.id !== selectedEdge.id));
 
         console.log(`Edge ${selectedEdge.id} deleted successfully.`);
       } catch (error) {
@@ -349,15 +354,19 @@ function App() {
   const handleEdgeReverse = async () => {
     if (selectedEdge) {
       try {
+        const updatedReverseAnimated = !selectedEdge.reverseAnimated;
+        await axios.put(`/api/thinking-trees/edges/${selectedEdge.id}/reverse-animation`, {
+          reverseAnimated: updatedReverseAnimated,
+        });
         setEdges((eds) =>
           eds.map((e) =>
             e.id === selectedEdge.id
               ? {
                   ...e,
-                  reverseAnimated: !e.reverseAnimated,
+                  reverseAnimated: updatedReverseAnimated,
                   style: {
                     ...e.style,
-                    animationDirection: !e.reverseAnimated ? 'reverse' : 'normal', 
+                    animationDirection: updatedReverseAnimated ? 'reverse' : 'normal',
                   },
                 }
               : e

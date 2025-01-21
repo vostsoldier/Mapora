@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const ThinkTreeNode = require('../models/ThinkTreeNode');
-
+const ThinkTreeEdge = require('../models/ThinkTreeEdge');
 router.post('/', async (req, res) => {
   const { title, content, parentId, position, type } = req.body;
 
@@ -20,6 +20,14 @@ router.post('/', async (req, res) => {
       const parentNode = await ThinkTreeNode.findById(parentId);
       parentNode.children.push(savedNode._id);
       await parentNode.save();
+      const newEdge = new ThinkTreeEdge({
+        source: parentId,
+        target: savedNode._id,
+        reverseAnimated: false,
+        animated: true,
+      });
+
+      await newEdge.save();
     }
 
     res.status(201).json(savedNode);
@@ -27,7 +35,6 @@ router.post('/', async (req, res) => {
     res.status(400).json({ message: err.message });
   }
 });
-
 router.get('/full-tree', async (req, res) => {
   try {
     const nodes = await ThinkTreeNode.find().lean();
@@ -48,12 +55,13 @@ router.get('/full-tree', async (req, res) => {
       }
     });
 
-    res.json(tree);
+    const edges = await ThinkTreeEdge.find().lean();
+
+    res.json({ tree, edges });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
-
 router.put('/bulk-update', async (req, res) => {
   const { nodes } = req.body;
 
@@ -76,6 +84,7 @@ router.put('/bulk-update', async (req, res) => {
 
     await ThinkTreeNode.updateMany({}, { children: [] });
     console.log('Children arrays reset.');
+
     const allNodes = await ThinkTreeNode.find().select('_id parent').lean();
     const parentChildrenMap = {};
 
@@ -116,17 +125,32 @@ router.put('/:id/parent', async (req, res) => {
     if (!node) {
       return res.status(404).json({ message: 'Node not found' });
     }
+
     if (node.parent) {
       await ThinkTreeNode.findByIdAndUpdate(node.parent, {
         $pull: { children: node._id },
       });
+      await ThinkTreeEdge.findOneAndDelete({
+        source: node.parent,
+        target: node._id,
+      });
     }
+
     node.parent = parentId || null;
     await node.save();
+
     if (parentId) {
       await ThinkTreeNode.findByIdAndUpdate(parentId, {
         $addToSet: { children: node._id },
       });
+      const newEdge = new ThinkTreeEdge({
+        source: parentId,
+        target: node._id,
+        reverseAnimated: false,
+        animated: true,
+      });
+
+      await newEdge.save();
     }
 
     res.json({ message: 'Parent updated successfully', node });
@@ -135,31 +159,6 @@ router.put('/:id/parent', async (req, res) => {
     res.status(500).json({ message: 'Server error updating parent' });
   }
 });
-router.delete('/:id', async (req, res) => {
-  try {
-    const deleteNodeAndChildren = async (nodeId) => {
-      const node = await ThinkTreeNode.findById(nodeId);
-      if (!node) return;
-
-      for (const childId of node.children) {
-        await deleteNodeAndChildren(childId);
-      }
-      if (node.parent) {
-        await ThinkTreeNode.findByIdAndUpdate(node.parent, {
-          $pull: { children: node._id },
-        });
-      }
-
-      await ThinkTreeNode.findByIdAndDelete(nodeId);
-    };
-
-    await deleteNodeAndChildren(req.params.id);
-    res.json({ message: 'Node and its children deleted' });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
 router.put('/:id/position', async (req, res) => {
   const { x, y } = req.body;
 
@@ -207,6 +206,57 @@ router.put('/:id/title', async (req, res) => {
   } catch (err) {
     console.error('Error updating node title:', err);
     res.status(500).json({ message: 'Server error updating title' });
+  }
+});
+router.delete('/:id', async (req, res) => {
+  try {
+    const deleteNodeAndChildren = async (nodeId) => {
+      const node = await ThinkTreeNode.findById(nodeId);
+      if (!node) return;
+      await ThinkTreeEdge.deleteMany({ source: nodeId });
+      await ThinkTreeEdge.deleteMany({ target: nodeId });
+
+      for (const childId of node.children) {
+        await deleteNodeAndChildren(childId);
+      }
+
+      if (node.parent) {
+        await ThinkTreeNode.findByIdAndUpdate(node.parent, {
+          $pull: { children: node._id },
+        });
+        await ThinkTreeEdge.findOneAndDelete({
+          source: node.parent,
+          target: node._id,
+        });
+      }
+
+      await ThinkTreeNode.findByIdAndDelete(nodeId);
+    };
+
+    await deleteNodeAndChildren(req.params.id);
+    res.json({ message: 'Node and its children deleted' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+router.put('/edges/:id/reverse-animation', async (req, res) => {
+  const { reverseAnimated } = req.body;
+
+  try {
+    const updatedEdge = await ThinkTreeEdge.findByIdAndUpdate(
+      req.params.id,
+      { reverseAnimated },
+      { new: true }
+    );
+
+    if (!updatedEdge) {
+      return res.status(404).json({ message: 'Edge not found' });
+    }
+
+    res.json(updatedEdge);
+  } catch (err) {
+    console.error('Error reversing edge animation:', err);
+    res.status(500).json({ message: 'Server error reversing edge animation' });
   }
 });
 
