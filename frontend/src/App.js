@@ -36,7 +36,7 @@ function App() {
   const [selectedEdge, setSelectedEdge] = useState(null);
   const [connectSource, setConnectSource] = useState(null);
   const [authToken, setAuthToken] = useState(localStorage.getItem('token') || '');
-  const [isDemo, setIsDemo] = useState(false); // Added state for demo mode
+  const [isDemo, setIsDemo] = useState(false); 
   const [currentView, setCurrentView] = useState(authToken || isDemo ? 'app' : 'home');
 
   useEffect(() => {
@@ -148,7 +148,7 @@ function App() {
       traverseTree(tree);
       fetchedEdges.forEach((edge) => {
         flowEdges.push({
-          id: edge._id,
+          id: edge._id, 
           source: edge.source,
           target: edge.target,
           animated: edge.animated,
@@ -201,29 +201,31 @@ function App() {
 
   const onConnectHandler = useCallback(
     async (params) => {
-      setEdges((eds) =>
-        addEdge(
-          {
-            ...params,
-            animated: true,
-            reverseAnimated: false,
-            style: { animationDirection: 'normal' },
-          },
-          eds
-        )
-      );
       try {
-        await axios.put(`/api/thinking-trees/${params.target}/parent`, {
-          parentId: params.source,
+        const response = await axios.post('/api/thinking-trees/edges', {
+          source: params.source,
+          target: params.target,
         }, {
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
         });
-        console.log(`Updated parent of node ${params.target} to ${params.source}`);
+
+        const newEdge = response.data; 
+        setEdges((eds) => [
+          ...eds,
+          {
+            id: newEdge._id, 
+            source: newEdge.source,
+            target: newEdge.target,
+            animated: newEdge.animated,
+            reverseAnimated: newEdge.reverseAnimated,
+            style: { animationDirection: newEdge.reverseAnimated ? 'reverse' : 'normal' },
+          },
+        ]);
       } catch (error) {
-        console.error('Error updating parent node:', error);
-        alert('Failed to update parent node.');
+        console.error('Error creating edge:', error);
+        alert('Failed to create edge.');
       }
     },
     [authToken]
@@ -458,7 +460,6 @@ function App() {
           },
         });
         setEdges((eds) => eds.filter((e) => e.id !== selectedEdge.id));
-
         console.log(`Edge ${selectedEdge.id} deleted successfully.`);
       } catch (error) {
         console.error('Error deleting edge:', error);

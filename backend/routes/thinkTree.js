@@ -296,4 +296,23 @@ router.put('/edges/:id/reverse-animation', async (req, res) => {
   }
 });
 
+router.post('/edges', async (req, res) => {
+  const { source, target } = req.body;
+
+  try {
+    const newEdge = new ThinkTreeEdge({
+      source,
+      target,
+      reverseAnimated: false,
+      animated: true,
+    });
+
+    const savedEdge = await newEdge.save();
+    res.status(201).json(savedEdge);
+  } catch (err) {
+    console.error('Error creating edge:', err);
+    res.status(500).json({ message: 'Server error creating edge' });
+  }
+});
+
 module.exports = router;
