@@ -34,6 +34,7 @@ function App() {
   const [editedTitle, setEditedTitle] = useState('');
   const [edgeContextMenu, setEdgeContextMenu] = useState(null);
   const [selectedEdge, setSelectedEdge] = useState(null);
+  const [connectSource, setConnectSource] = useState(null);
 
   useEffect(() => {
     fetchTree();
@@ -45,6 +46,7 @@ function App() {
       setSelectedNode(null);
       setEdgeContextMenu(null);
       setSelectedEdge(null);
+      setConnectSource(null); 
     };
 
     window.addEventListener('click', handleClick);
@@ -52,6 +54,58 @@ function App() {
       window.removeEventListener('click', handleClick);
     };
   }, []);
+
+  useEffect(() => {
+    const handleHandleClick = (event) => {
+      event.stopPropagation(); 
+
+      const handleElement = event.target.closest('.react-flow__handle');
+      if (!handleElement) return;
+
+      const nodeElement = handleElement.closest('.react-flow__node');
+      if (!nodeElement) return;
+
+      const nodeId = nodeElement.getAttribute('data-id');
+      const handleType = handleElement.classList.contains('react-flow__handle-source')
+        ? 'source'
+        : 'target';
+
+      if (!connectSource) {
+        setConnectSource({ nodeId, handleType });
+      } else if (connectSource.nodeId !== nodeId) {
+        const newEdge = {
+          id: `${connectSource.nodeId}-${nodeId}-${Date.now()}`,
+          source: connectSource.handleType === 'source' ? connectSource.nodeId : nodeId,
+          target: connectSource.handleType === 'source' ? nodeId : connectSource.nodeId,
+          animated: true,
+          reverseAnimated: false,
+          style: { animationDirection: 'normal' },
+        };
+
+        setEdges((eds) => addEdge(newEdge, eds));
+        axios
+          .put(`/api/thinking-trees/${newEdge.target}/parent`, {
+            parentId: newEdge.source,
+          })
+          .then(() => {
+            console.log(`Updated parent of node ${newEdge.target} to ${newEdge.source}`);
+          })
+          .catch((error) => {
+            console.error('Error updating parent node:', error);
+            alert('Failed to update parent node.');
+          });
+
+        setConnectSource(null); 
+      } else {
+        setConnectSource(null);
+      }
+    };
+
+    window.addEventListener('click', handleHandleClick);
+    return () => {
+      window.removeEventListener('click', handleHandleClick);
+    };
+  }, [connectSource]);
 
   const fetchTree = async () => {
     try {
@@ -70,16 +124,16 @@ function App() {
       };
 
       const traverseTree = (nodes) => {
-        nodes.forEach(node => {
+        nodes.forEach((node) => {
           processNode(node);
           traverseTree(node.children);
         });
       };
 
       traverseTree(tree);
-      fetchedEdges.forEach(edge => {
+      fetchedEdges.forEach((edge) => {
         flowEdges.push({
-          id: edge._id, 
+          id: edge._id,
           source: edge.source,
           target: edge.target,
           animated: edge.animated,
@@ -104,7 +158,7 @@ function App() {
       const response = await axios.post('/api/thinking-trees', {
         title: 'Central Node',
         content: '',
-        parentIds: [], 
+        parentIds: [],
         position: { x: 250, y: 250 },
         type: 'central',
       });
@@ -127,7 +181,7 @@ function App() {
         addEdge(
           {
             ...params,
-            animated: true, 
+            animated: true,
             reverseAnimated: false,
             style: { animationDirection: 'normal' },
           },
@@ -174,9 +228,7 @@ function App() {
         _id: node.id,
         title: node.data.label,
         content: '',
-        parents: edges
-          .filter(edge => edge.target === node.id)
-          .map(edge => edge.source),
+        parents: edges.filter((edge) => edge.target === node.id).map((edge) => edge.source),
         position: node.position,
         type: node.type || 'default',
       }));
@@ -214,7 +266,7 @@ function App() {
       const response = await axios.post('/api/thinking-trees', {
         title: nodeTitle,
         content: '',
-        parentIds: [], 
+        parentIds: [],
         position: { x: Math.random() * 250, y: Math.random() * 250 },
         type: 'default',
       });
@@ -244,14 +296,18 @@ function App() {
       mouseX: event.clientX - 2,
       mouseY: event.clientY - 4,
     });
-    setEdgeContextMenu(null); 
+    setEdgeContextMenu(null);
   }, []);
 
   const handleDelete = async () => {
     if (selectedNode) {
       try {
         setNodes((nds) => nds.filter((node) => node.id !== selectedNode.id));
-        setEdges((eds) => eds.filter((edge) => edge.source !== selectedNode.id && edge.target !== selectedNode.id));
+        setEdges((eds) =>
+          eds.filter(
+            (edge) => edge.source !== selectedNode.id && edge.target !== selectedNode.id
+          )
+        );
 
         await axios.delete(`/api/thinking-trees/${selectedNode.id}`);
         console.log(`Node ${selectedNode.id} deleted successfully.`);
@@ -334,7 +390,7 @@ function App() {
       mouseX: event.clientX - 2,
       mouseY: event.clientY - 4,
     });
-    setContextMenu(null); 
+    setContextMenu(null);
   }, []);
 
   const handleEdgeDelete = async () => {
