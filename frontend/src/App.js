@@ -1,5 +1,4 @@
 import 'reactflow/dist/style.css';
-
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import ReactFlow, {
   addEdge,
@@ -13,6 +12,7 @@ import ReactFlow, {
 import axios from 'axios';
 import './App.css';
 import debounce from 'lodash.debounce';
+import Home from './Home';
 
 function Sidebar() {
   return (
@@ -35,10 +35,15 @@ function App() {
   const [edgeContextMenu, setEdgeContextMenu] = useState(null);
   const [selectedEdge, setSelectedEdge] = useState(null);
   const [connectSource, setConnectSource] = useState(null);
+  const [authToken, setAuthToken] = useState(localStorage.getItem('token') || '');
+  const [isDemo, setIsDemo] = useState(false); // Added state for demo mode
+  const [currentView, setCurrentView] = useState(authToken || isDemo ? 'app' : 'home');
 
   useEffect(() => {
-    fetchTree();
-  }, []);
+    if (currentView === 'app') {
+      fetchTree();
+    }
+  }, [currentView, isDemo]);
 
   useEffect(() => {
     const handleClick = () => {
@@ -56,6 +61,8 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (currentView !== 'app') return;
+
     const handleHandleClick = (event) => {
       event.stopPropagation(); 
 
@@ -86,6 +93,10 @@ function App() {
         axios
           .put(`/api/thinking-trees/${newEdge.target}/parent`, {
             parentId: newEdge.source,
+          }, {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
           })
           .then(() => {
             console.log(`Updated parent of node ${newEdge.target} to ${newEdge.source}`);
@@ -105,11 +116,15 @@ function App() {
     return () => {
       window.removeEventListener('click', handleHandleClick);
     };
-  }, [connectSource]);
+  }, [connectSource, currentView, authToken]);
 
   const fetchTree = async () => {
     try {
-      const response = await axios.get('/api/thinking-trees/full-tree');
+      const response = await axios.get('/api/thinking-trees/full-tree', {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
       const { tree, edges: fetchedEdges } = response.data;
       const flowNodes = [];
       const flowEdges = [];
@@ -150,6 +165,11 @@ function App() {
       }
     } catch (error) {
       console.error('Error fetching tree:', error);
+      if (error.response && error.response.status === 401) {
+        setAuthToken('');
+        localStorage.removeItem('token');
+        setCurrentView('home');
+      }
     }
   };
 
@@ -161,6 +181,10 @@ function App() {
         parentIds: [],
         position: { x: 250, y: 250 },
         type: 'central',
+      }, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
       });
       const newNode = response.data;
       flowNodes.push({
@@ -191,6 +215,10 @@ function App() {
       try {
         await axios.put(`/api/thinking-trees/${params.target}/parent`, {
           parentId: params.source,
+        }, {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
         });
         console.log(`Updated parent of node ${params.target} to ${params.source}`);
       } catch (error) {
@@ -198,7 +226,7 @@ function App() {
         alert('Failed to update parent node.');
       }
     },
-    []
+    [authToken]
   );
 
   const onElementsRemoveHandler = (elementsToRemove) => {
@@ -210,7 +238,11 @@ function App() {
 
     nodesToRemove.forEach(async (node) => {
       try {
-        await axios.delete(`/api/thinking-trees/${node.id}`);
+        await axios.delete(`/api/thinking-trees/${node.id}`, {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        });
       } catch (error) {
         console.error('Error deleting node:', error);
       }
@@ -235,13 +267,17 @@ function App() {
 
       await axios.put('/api/thinking-trees/bulk-update', {
         nodes: nodesData,
+      }, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
       });
       console.log('Tree saved successfully!');
     } catch (error) {
       console.error('Error saving tree:', error);
       alert('Failed to save tree.');
     }
-  }, [nodes, edges]);
+  }, [nodes, edges, authToken]);
 
   const debouncedSaveTree = useCallback(
     debounce(async () => {
@@ -251,10 +287,12 @@ function App() {
   );
 
   useEffect(() => {
-    debouncedSaveTree();
+    if (currentView === 'app') {
+      debouncedSaveTree();
+    }
 
     return debouncedSaveTree.cancel;
-  }, [nodes, edges, debouncedSaveTree]);
+  }, [nodes, edges, debouncedSaveTree, currentView]);
 
   const addNode = async () => {
     if (!nodeTitle.trim()) {
@@ -269,6 +307,10 @@ function App() {
         parentIds: [],
         position: { x: Math.random() * 250, y: Math.random() * 250 },
         type: 'default',
+      }, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
       });
       const newNode = response.data;
       setNodes((nds) => [
@@ -309,7 +351,11 @@ function App() {
           )
         );
 
-        await axios.delete(`/api/thinking-trees/${selectedNode.id}`);
+        await axios.delete(`/api/thinking-trees/${selectedNode.id}`, {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        });
         console.log(`Node ${selectedNode.id} deleted successfully.`);
       } catch (error) {
         console.error('Error deleting node:', error);
@@ -330,6 +376,10 @@ function App() {
         await axios.put(`/api/thinking-trees/${id}/position`, {
           x: position.x,
           y: position.y,
+        }, {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
         });
         console.log(`Position of node ${id} updated successfully.`);
       } catch (error) {
@@ -337,7 +387,7 @@ function App() {
         alert('Failed to update node position.');
       }
     },
-    []
+    [authToken]
   );
 
   const handleEdit = () => {
@@ -357,6 +407,10 @@ function App() {
     try {
       const response = await axios.put(`/api/thinking-trees/${selectedNode.id}/title`, {
         title: editedTitle,
+      }, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
       });
       const updatedNode = response.data;
 
@@ -398,6 +452,10 @@ function App() {
       try {
         await axios.put(`/api/thinking-trees/edges/${selectedEdge.id}/remove-parent`, {
           parentId: selectedEdge.source,
+        }, {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
         });
         setEdges((eds) => eds.filter((e) => e.id !== selectedEdge.id));
 
@@ -416,27 +474,33 @@ function App() {
     if (selectedEdge) {
       try {
         const updatedReverseAnimated = !selectedEdge.reverseAnimated;
-        await axios.put(`/api/thinking-trees/edges/${selectedEdge.id}/reverse-animation`, {
+        const response = await axios.put(`/api/thinking-trees/edges/${selectedEdge.id}/reverse-animation`, {
           reverseAnimated: updatedReverseAnimated,
+        }, {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
         });
+        const updatedEdge = response.data;
+
         setEdges((eds) =>
           eds.map((e) =>
-            e.id === selectedEdge.id
+            e.id === updatedEdge.id
               ? {
                   ...e,
-                  reverseAnimated: updatedReverseAnimated,
+                  reverseAnimated: updatedEdge.reverseAnimated,
                   style: {
                     ...e.style,
-                    animationDirection: updatedReverseAnimated ? 'reverse' : 'normal',
+                    animationDirection: updatedEdge.reverseAnimated ? 'reverse' : 'normal',
                   },
                 }
               : e
           )
         );
 
-        console.log(`Edge ${selectedEdge.id} animation direction reversed.`);
+        console.log(`Edge ${updatedEdge.id} animation direction reversed.`);
       } catch (error) {
-        console.error('Error reversing edge:', error);
+        console.error('Error reversing edge animation:', error);
         alert('Failed to reverse edge animation.');
       } finally {
         setEdgeContextMenu(null);
@@ -445,160 +509,189 @@ function App() {
     }
   };
 
+  const handleSignup = async () => {
+  };
+
+  const handleLogin = (token, demo = false) => {
+    setAuthToken(token);
+    if (demo) {
+      setIsDemo(true);
+    } else {
+      localStorage.setItem('token', token);
+    }
+    setCurrentView('app');
+  };
+
+  const handleLogout = () => {
+    setAuthToken('');
+    setIsDemo(false);
+    localStorage.removeItem('token');
+    setCurrentView('home');
+  };
+
   return (
     <ReactFlowProvider>
-      <div className="wrapper">
-        <Sidebar />
-        <div className="main">
-          <header className="App-header">
-            <h1>Think Tree</h1>
-            <div className="button-container">
-              <button className="btn" onClick={() => setIsAdding(true)}>
-                Add Node
-              </button>
-              <button className="btn" onClick={saveTree}>
-                Save Tree
-              </button>
-            </div>
-          </header>
-          {isAdding && (
-            <div className="modal">
-              <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <h2>Add New Node</h2>
-                <input
-                  type="text"
-                  value={nodeTitle}
-                  onChange={(e) => setNodeTitle(e.target.value)}
-                  placeholder="Enter node title"
-                />
-                <div className="modal-actions">
-                  <button className="btn" onClick={addNode}>
-                    Add
+      {currentView === 'home' ? (
+        <Home onLogin={handleLogin} />
+      ) : (
+        <div className="wrapper">
+          <Sidebar />
+          <div className="main">
+            <header className="App-header">
+              <h1>Think Tree</h1>
+              <div className="button-container">
+                <button className="btn" onClick={() => setIsAdding(true)}>
+                  Add Node
+                </button>
+                {!isDemo && (
+                  <button className="btn" onClick={saveTree}>
+                    Save Tree
                   </button>
-                  <button className="btn cancel" onClick={() => setIsAdding(false)}>
-                    Cancel
-                  </button>
+                )}
+                <button className="btn cancel" onClick={handleLogout}>
+                  Logout
+                </button>
+              </div>
+            </header>
+            {isAdding && (
+              <div className="modal">
+                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                  <h2>Add New Node</h2>
+                  <input
+                    type="text"
+                    value={nodeTitle}
+                    onChange={(e) => setNodeTitle(e.target.value)}
+                    placeholder="Enter node title"
+                  />
+                  <div className="modal-actions">
+                    <button className="btn" onClick={addNode}>
+                      Add
+                    </button>
+                    <button className="btn cancel" onClick={() => setIsAdding(false)}>
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-          {isEditing && (
-            <div className="modal">
-              <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <h2>Edit Node Title</h2>
-                <input
-                  type="text"
-                  value={editedTitle}
-                  onChange={(e) => setEditedTitle(e.target.value)}
-                  placeholder="Enter new node title"
-                />
-                <div className="modal-actions">
-                  <button className="btn" onClick={saveEditedTitle}>
-                    Save
-                  </button>
-                  <button className="btn cancel" onClick={cancelEditing}>
-                    Cancel
-                  </button>
+            )}
+            {isEditing && (
+              <div className="modal">
+                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                  <h2>Edit Node Title</h2>
+                  <input
+                    type="text"
+                    value={editedTitle}
+                    onChange={(e) => setEditedTitle(e.target.value)}
+                    placeholder="Enter new node title"
+                  />
+                  <div className="modal-actions">
+                    <button className="btn" onClick={saveEditedTitle}>
+                      Save
+                    </button>
+                    <button className="btn cancel" onClick={cancelEditing}>
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               </div>
+            )}
+            <div className="react-flow-wrapper">
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnectHandler}
+                onElementsRemove={onElementsRemoveHandler}
+                onNodeContextMenu={onNodeContextMenu}
+                onEdgeClick={onEdgeClickHandler}
+                onNodeDragStop={onNodeDragStopHandler}
+                onLoad={onLoadHandler}
+                deleteKeyCode={46}
+                snapToGrid={true}
+                snapGrid={[15, 15]}
+                fitView
+              >
+                <MiniMap />
+                <Controls />
+                <Background />
+              </ReactFlow>
             </div>
-          )}
-          <div className="react-flow-wrapper">
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnectHandler}
-              onElementsRemove={onElementsRemoveHandler}
-              onNodeContextMenu={onNodeContextMenu}
-              onEdgeClick={onEdgeClickHandler}
-              onNodeDragStop={onNodeDragStopHandler}
-              onLoad={onLoadHandler}
-              deleteKeyCode={46}
-              snapToGrid={true}
-              snapGrid={[15, 15]}
-              fitView
-            >
-              <MiniMap />
-              <Controls />
-              <Background />
-            </ReactFlow>
+            {contextMenu ? (
+              <div
+                className="context-menu"
+                style={{
+                  top: contextMenu.mouseY,
+                  left: contextMenu.mouseX,
+                  position: 'absolute',
+                  backgroundColor: '#fff',
+                  boxShadow: '0px 0px 5px rgba(0,0,0,0.2)',
+                  borderRadius: '5px',
+                  zIndex: 1000,
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div
+                  className="context-menu-item"
+                  onClick={handleEdit}
+                  style={{
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Edit
+                </div>
+                <div
+                  className="context-menu-item"
+                  onClick={handleDelete}
+                  style={{
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Delete
+                </div>
+              </div>
+            ) : null}
+            {edgeContextMenu ? (
+              <div
+                className="context-menu"
+                style={{
+                  top: edgeContextMenu.mouseY,
+                  left: edgeContextMenu.mouseX,
+                  position: 'absolute',
+                  backgroundColor: '#fff',
+                  boxShadow: '0px 0px 5px rgba(0,0,0,0.2)',
+                  borderRadius: '5px',
+                  zIndex: 1000,
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div
+                  className="context-menu-item"
+                  onClick={handleEdgeDelete}
+                  style={{
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Delete
+                </div>
+                <div
+                  className="context-menu-item"
+                  onClick={handleEdgeReverse}
+                  style={{
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Reverse
+                </div>
+              </div>
+            ) : null}
           </div>
-          {contextMenu ? (
-            <div
-              className="context-menu"
-              style={{
-                top: contextMenu.mouseY,
-                left: contextMenu.mouseX,
-                position: 'absolute',
-                backgroundColor: '#fff',
-                boxShadow: '0px 0px 5px rgba(0,0,0,0.2)',
-                borderRadius: '5px',
-                zIndex: 1000,
-              }}
-              onClick={(e) => e.stopPropagation()} 
-            >
-              <div
-                className="context-menu-item"
-                onClick={handleEdit}
-                style={{
-                  padding: '8px 12px',
-                  cursor: 'pointer',
-                }}
-              >
-                Edit
-              </div>
-              <div
-                className="context-menu-item"
-                onClick={handleDelete}
-                style={{
-                  padding: '8px 12px',
-                  cursor: 'pointer',
-                }}
-              >
-                Delete
-              </div>
-            </div>
-          ) : null}
-          {edgeContextMenu ? (
-            <div
-              className="context-menu"
-              style={{
-                top: edgeContextMenu.mouseY,
-                left: edgeContextMenu.mouseX,
-                position: 'absolute',
-                backgroundColor: '#fff',
-                boxShadow: '0px 0px 5px rgba(0,0,0,0.2)',
-                borderRadius: '5px',
-                zIndex: 1000,
-              }}
-              onClick={(e) => e.stopPropagation()} 
-            >
-              <div
-                className="context-menu-item"
-                onClick={handleEdgeDelete}
-                style={{
-                  padding: '8px 12px',
-                  cursor: 'pointer',
-                }}
-              >
-                Delete
-              </div>
-              <div
-                className="context-menu-item"
-                onClick={handleEdgeReverse}
-                style={{
-                  padding: '8px 12px',
-                  cursor: 'pointer',
-                }}
-              >
-                Reverse
-              </div>
-            </div>
-          ) : null}
         </div>
-      </div>
+      )}
     </ReactFlowProvider>
   );
 }

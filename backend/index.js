@@ -14,9 +14,10 @@ mongoose.connect(process.env.MONGO_URI, {
 })
 .then(() => console.log('MongoDB connected'))
 .catch(err => console.error('MongoDB connection error:', err));
-
 const thinkTreeRoutes = require('./routes/thinkTree');
 app.use('/api/thinking-trees', thinkTreeRoutes);
+const usersRoutes = require('./routes/users');
+app.use('/api/users', usersRoutes);
 
 app.get('/', (req, res) => {
   res.send('Hello from the backend!');

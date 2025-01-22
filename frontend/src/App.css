@@ -141,3 +141,67 @@ button {
 .context-menu-item:hover {
   background-color: #f0f0f0;
 }
+.home-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #f0f0f0;
+}
+
+.home-container .product-name {
+  font-size: 48px;
+  margin-bottom: 40px;
+  color: #282c34;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 300px;
+}
+
+.auth-form input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.auth-form .btn {
+  padding: 10px;
+}
+
+.toggle-link {
+  color: #007bff;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.toggle-link:hover {
+  color: #0056b3;
+}
+
+.message {
+  margin-top: 20px;
+  color: red;
+}
+
+.btn.signup {
+  background-color: #4caf50;
+  color: white;
+}
+
+.btn.signup:hover {
+  background-color: #45a049;
+}
+
+.btn.login {
+  background-color: #61dafb;
+  color: #282c34;
+}
+
+.btn.login:hover {
+  background-color: #21a1f1;
+}
