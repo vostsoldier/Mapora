@@ -1,15 +1,22 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Home.css';
 import axios from './api/axios';
 
 function Home({ onLogin }) {
+  const navigate = useNavigate();
+
   const handleSignup = () => {
-    console.log('Navigate to Signup');
+    navigate('/signup');
+  };
+
+  const handleLogin = () => {
+    navigate('/login');
   };
 
   const handleDemo = () => {
-    // Do demo logic here - make sure demo doesnt save - only when refresh but when they close
-    onLogin(null, true); // Pass true to indicate demo mode or maybe some other cond maybe
+    onLogin(null, true); 
+    navigate('/app');
   };
 
   return (
@@ -18,6 +25,9 @@ function Home({ onLogin }) {
       <div className="button-group">
         <button className="btn signup" onClick={handleSignup}>
           Signup
+        </button>
+        <button className="btn login" onClick={handleLogin}>
+          Login
         </button>
         <button className="btn demo" onClick={handleDemo}>
           Demo
