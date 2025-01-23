@@ -1,6 +1,6 @@
 import React from 'react';
 import './Home.css';
-import axios from 'axios';
+import axios from './api/axios';
 
 function Home({ onLogin }) {
   const handleSignup = () => {

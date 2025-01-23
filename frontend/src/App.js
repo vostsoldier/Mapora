@@ -9,7 +9,7 @@ import ReactFlow, {
   Background,
   ReactFlowProvider,
 } from 'reactflow';
-import axios from 'axios';
+import axios from './api/axios';
 import './App.css';
 import debounce from 'lodash.debounce';
 import Home from './Home';
