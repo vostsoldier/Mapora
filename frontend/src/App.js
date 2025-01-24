@@ -612,12 +612,35 @@ function App() {
     if (demo) {
       setIsDemo(true);
       console.log('Demo mode enabled');
-      if (!localStorage.getItem('demo_nodes')) {
-        localStorage.setItem('demo_nodes', JSON.stringify([]));
+      let storedNodes = JSON.parse(localStorage.getItem('demo_nodes'));
+      let storedEdges = JSON.parse(localStorage.getItem('demo_edges'));
+
+      if (!storedNodes || storedNodes.length === 0) {
+        const centralNode = {
+          id: `demo-node-1`,
+          data: { label: 'Central Node' },
+          position: { x: 250, y: 250 },
+          type: 'default',
+        };
+        storedNodes = [centralNode];
+        localStorage.setItem('demo_nodes', JSON.stringify(storedNodes));
       }
-      if (!localStorage.getItem('demo_edges')) {
-        localStorage.setItem('demo_edges', JSON.stringify([]));
+
+      if (!storedEdges) {
+        storedEdges = [];
+        localStorage.setItem('demo_edges', JSON.stringify(storedEdges));
       }
+
+      setNodes(storedNodes);
+      setEdges(
+        storedEdges.map((edge) => ({
+          ...edge,
+          style: {
+            ...edge.style,
+            animationDirection: edge.reverseAnimated ? 'reverse' : 'normal',
+          },
+        }))
+      );
     } else {
       localStorage.setItem('token', token);
     }
