@@ -129,7 +129,18 @@ function App() {
       const storedNodes = JSON.parse(localStorage.getItem('demo_nodes')) || [];
       const storedEdges = JSON.parse(localStorage.getItem('demo_edges')) || [];
       setNodes(storedNodes);
-      setEdges(storedEdges);
+      setEdges(
+        storedEdges.map((edge) => ({
+          ...edge,
+          style: {
+            ...edge.style,
+            animationDirection: edge.reverseAnimated ? 'reverse' : 'normal',
+          },
+        }))
+      );
+      console.log('Loaded nodes and edges from localStorage in demo mode');
+      console.log('Stored Nodes:', storedNodes);
+      console.log('Stored Edges:', storedEdges);
     } else {
       try {
         const response = await axios.get('/api/thinking-trees/full-tree', {
@@ -283,6 +294,9 @@ function App() {
 
   const saveTree = useCallback(async () => {
     if (isDemo) {
+      console.log('Saving tree in demo mode');
+      console.log('Nodes:', nodes);
+      console.log('Edges:', edges);
       localStorage.setItem('demo_nodes', JSON.stringify(nodes));
       localStorage.setItem('demo_edges', JSON.stringify(edges));
       console.log('Tree saved locally!');
@@ -296,9 +310,17 @@ function App() {
           position: node.position,
           type: node.type || 'default',
         }));
+        const edgesData = edges.map((edge) => ({
+          _id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          animated: edge.animated,
+          reverseAnimated: edge.reverseAnimated,
+        }));
 
         await axios.put('/api/thinking-trees/bulk-update', {
           nodes: nodesData,
+          edges: edgesData, 
         }, {
           headers: {
             Authorization: `Bearer ${authToken}`,
@@ -501,6 +523,7 @@ function App() {
     if (selectedEdge) {
       if (isDemo) {
         setEdges((eds) => eds.filter((e) => e.id !== selectedEdge.id));
+        localStorage.setItem('demo_edges', JSON.stringify(edges.filter((e) => e.id !== selectedEdge.id)));
       } else {
         try {
           await axios.put(`/api/thinking-trees/edges/${selectedEdge.id}/remove-parent`, {
@@ -526,6 +549,7 @@ function App() {
   const handleEdgeReverse = async () => {
     if (selectedEdge) {
       if (isDemo) {
+        console.log('Reversing edge in demo mode:', selectedEdge.id);
         const updatedEdges = edges.map((e) =>
           e.id === selectedEdge.id
             ? {
@@ -539,6 +563,8 @@ function App() {
             : e
         );
         setEdges(updatedEdges);
+        localStorage.setItem('demo_edges', JSON.stringify(updatedEdges));
+        console.log('Edge reversed and saved locally');
       } else {
         try {
           const updatedReverseAnimated = !selectedEdge.reverseAnimated;
@@ -585,6 +611,7 @@ function App() {
     setAuthToken(token);
     if (demo) {
       setIsDemo(true);
+      console.log('Demo mode enabled');
       if (!localStorage.getItem('demo_nodes')) {
         localStorage.setItem('demo_nodes', JSON.stringify([]));
       }
