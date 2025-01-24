@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const ThinkTreeNode = require('../models/ThinkTreeNode');
 const ThinkTreeEdge = require('../models/ThinkTreeEdge');
 router.post('/', async (req, res) => {
@@ -200,6 +201,11 @@ router.put('/:id/position', async (req, res) => {
 
   if (typeof x !== 'number' || typeof y !== 'number') {
     return res.status(400).json({ message: 'Invalid position data' });
+  }
+
+  // Validate MongoDB ObjectId
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ message: 'Invalid node ID format' });
   }
 
   try {

@@ -336,16 +336,13 @@ function App() {
     }
 
     const newNode = {
-      id: `demo-node-${Date.now()}`,
+      id: isDemo ? `demo-node-${Date.now()}` : `temp-id-${Date.now()}`, // Temporary ID for non-demo
       data: { label: nodeTitle },
       position: { x: Math.random() * 250, y: Math.random() * 250 },
       type: 'default',
     };
 
-    setNodes((nds) => [
-      ...nds,
-      newNode,
-    ]);
+    setNodes((nds) => [...nds, newNode]);
 
     if (isDemo) {
       const updatedNodes = [...nodes, newNode];
@@ -422,6 +419,16 @@ function App() {
       const { id, position } = node;
       console.log(`Node ${id} moved to`, position);
 
+      if (isDemo) {
+        const updatedNodes = nodes.map((n) =>
+          n.id === id ? { ...n, position } : n
+        );
+        setNodes(updatedNodes);
+        localStorage.setItem('demo_nodes', JSON.stringify(updatedNodes));
+        console.log(`Node ${id} position updated locally.`);
+        return;
+      }
+
       try {
         await axios.put(`/api/thinking-trees/${id}/position`, {
           x: position.x,
@@ -437,7 +444,7 @@ function App() {
         alert('Failed to update node position.');
       }
     },
-    [authToken]
+    [authToken, isDemo, nodes]
   );
 
   const handleEdit = () => {
