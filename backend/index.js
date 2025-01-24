@@ -4,7 +4,10 @@ const mongoose = require('mongoose');
 const app = express();
 const PORT = process.env.PORT || 5001; 
 require('dotenv').config();
-const allowedOrigins = ['https://think-tree.vercel.app']; 
+const allowedOrigins = [
+  'https://think-tree.vercel.app',
+  'https://think-tree-qckusihbb-vostsoldiers-projects.vercel.app'
+];
 
 app.use(cors({
   origin: allowedOrigins,
