@@ -224,8 +224,6 @@ function App() {
           style: { animationDirection: 'normal' },
         };
         setEdges((eds) => addEdge(newEdge, eds));
-        const updatedEdges = [...edges, newEdge];
-        localStorage.setItem('demo_edges', JSON.stringify(updatedEdges));
       } else {
         try {
           const response = await axios.post('/api/thinking-trees/edges', {
@@ -255,7 +253,7 @@ function App() {
         }
       }
     },
-    [authToken, isDemo, edges]
+    [authToken, isDemo]
   );
 
   const onElementsRemoveHandler = (elementsToRemove) => {
@@ -344,10 +342,7 @@ function App() {
 
     setNodes((nds) => [...nds, newNode]);
 
-    if (isDemo) {
-      const updatedNodes = [...nodes, newNode];
-      localStorage.setItem('demo_nodes', JSON.stringify(updatedNodes));
-    } else {
+    if (!isDemo) {
       try {
         const response = await axios.post('/api/thinking-trees', {
           title: nodeTitle,
@@ -424,8 +419,6 @@ function App() {
           n.id === id ? { ...n, position } : n
         );
         setNodes(updatedNodes);
-        localStorage.setItem('demo_nodes', JSON.stringify(updatedNodes));
-        console.log(`Node ${id} position updated locally.`);
         return;
       }
 
@@ -508,9 +501,6 @@ function App() {
     if (selectedEdge) {
       if (isDemo) {
         setEdges((eds) => eds.filter((e) => e.id !== selectedEdge.id));
-        const updatedEdges = edges.filter((e) => e.id !== selectedEdge.id);
-        localStorage.setItem('demo_edges', JSON.stringify(updatedEdges));
-        console.log(`Edge ${selectedEdge.id} deleted successfully.`);
       } else {
         try {
           await axios.put(`/api/thinking-trees/edges/${selectedEdge.id}/remove-parent`, {
@@ -549,8 +539,6 @@ function App() {
             : e
         );
         setEdges(updatedEdges);
-        localStorage.setItem('demo_edges', JSON.stringify(updatedEdges));
-        console.log(`Edge ${selectedEdge.id} animation direction reversed.`);
       } else {
         try {
           const updatedReverseAnimated = !selectedEdge.reverseAnimated;
