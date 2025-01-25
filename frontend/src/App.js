@@ -39,8 +39,12 @@ function App() {
   const [selectedEdge, setSelectedEdge] = useState(null);
   const [connectSource, setConnectSource] = useState(null);
   const [authToken, setAuthToken] = useState(localStorage.getItem('token') || '');
-  const [isDemo, setIsDemo] = useState(false); 
-  const [currentView, setCurrentView] = useState(authToken || isDemo ? 'app' : 'home');
+  const [isDemo, setIsDemo] = useState(localStorage.getItem('isDemo') === 'true'); 
+  const [currentView, setCurrentView] = useState(() => {
+    if (localStorage.getItem('isDemo') === 'true') return 'app';
+    if (localStorage.getItem('token')) return 'app';
+    return 'home';
+  });
 
   useEffect(() => {
     if (currentView === 'app') {
@@ -235,6 +239,7 @@ function App() {
           style: { animationDirection: 'normal' },
         };
         setEdges((eds) => addEdge(newEdge, eds));
+        saveTree(); 
       } else {
         try {
           const response = await axios.post('/api/thinking-trees/edges', {
@@ -441,6 +446,7 @@ function App() {
           n.id === id ? { ...n, position } : n
         );
         setNodes(updatedNodes);
+        saveTree(); 
         return;
       }
 
@@ -459,7 +465,7 @@ function App() {
         alert('Failed to update node position.');
       }
     },
-    [authToken, isDemo, nodes]
+    [authToken, isDemo, nodes, saveTree]
   );
 
   const handleEdit = () => {
@@ -611,6 +617,7 @@ function App() {
     setAuthToken(token);
     if (demo) {
       setIsDemo(true);
+      localStorage.setItem('isDemo', 'true'); 
       console.log('Demo mode enabled');
       let storedNodes = JSON.parse(localStorage.getItem('demo_nodes'));
       let storedEdges = JSON.parse(localStorage.getItem('demo_edges'));
@@ -643,6 +650,8 @@ function App() {
       );
     } else {
       localStorage.setItem('token', token);
+      localStorage.removeItem('isDemo');
+      setIsDemo(false);
     }
     setCurrentView('app');
   };
@@ -651,6 +660,7 @@ function App() {
     setAuthToken('');
     setIsDemo(false);
     localStorage.removeItem('token');
+    localStorage.removeItem('isDemo'); 
     setCurrentView('home');
   };
 
