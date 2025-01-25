@@ -4,14 +4,19 @@ const mongoose = require('mongoose');
 const app = express();
 const PORT = process.env.PORT || 5001; 
 require('dotenv').config();
-const allowedOrigins = [
-  'https://think-tree.vercel.app',
-  'https://think-tree-qckusihbb-vostsoldiers-projects.vercel.app'
-];
-
-app.use(cors({
-  origin: allowedOrigins,
-}));
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    const vercelPattern = /^https:\/\/.*\.vercel\.app$/;
+    if (vercelPattern.test(origin)) {
+      return callback(null, true);
+    }
+    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+    return callback(new Error(msg), false);
+  },
+  credentials: true, 
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 mongoose.connect(process.env.MONGO_URI, {
@@ -20,6 +25,7 @@ mongoose.connect(process.env.MONGO_URI, {
 })
 .then(() => console.log('MongoDB connected'))
 .catch(err => console.error('MongoDB connection error:', err));
+
 const thinkTreeRoutes = require('./routes/thinkTree');
 app.use('/api/thinking-trees', thinkTreeRoutes);
 const usersRoutes = require('./routes/users');
@@ -30,11 +36,14 @@ app.get('/', (req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  if (err.code === 'EADDRINUSE') {
+  if (err instanceof cors.CorsError) {
+    res.status(403).json({ message: err.message });
+  } else if (err.code === 'EADDRINUSE') {
     console.error(`Port ${PORT} is already in use.`);
     process.exit(1);
+  } else {
+    next(err);
   }
-  next(err);
 });
 
 app.listen(PORT, () => {
