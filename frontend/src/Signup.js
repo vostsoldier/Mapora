@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from './api/axios';
+import api from './api/apiWrapper';
 import './Home.css'; 
 
 function Signup({ onLogin }) {

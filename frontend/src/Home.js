@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Home.css';
-import axios from './api/axios';
+import api from './api/apiWrapper';
 
 function Home({ onLogin }) {
   const navigate = useNavigate();

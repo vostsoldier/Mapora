@@ -412,26 +412,36 @@ function App() {
 
   const handleDelete = async () => {
     if (selectedNode) {
-      try {
+      if (isDemo) {
+        console.log(`Demo mode: Deleting node ${selectedNode.id} locally.`);
         setNodes((nds) => nds.filter((node) => node.id !== selectedNode.id));
         setEdges((eds) =>
           eds.filter(
             (edge) => edge.source !== selectedNode.id && edge.target !== selectedNode.id
           )
         );
-
-        await axios.delete(`/api/thinking-trees/${selectedNode.id}`, {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        });
-        console.log(`Node ${selectedNode.id} deleted successfully.`);
-      } catch (error) {
-        console.error('Error deleting node:', error);
-        alert('Failed to delete node.');
-      } finally {
+        saveTree();
         setContextMenu(null);
         setSelectedNode(null);
+        alert('Node deleted successfully (demo mode).');
+      } else {
+        try {
+          await axios.delete(`/api/thinking-trees/${selectedNode.id}`, {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          });
+          setNodes((nds) => nds.filter((node) => node.id !== selectedNode.id));
+          setEdges((eds) =>
+            eds.filter(
+              (edge) => edge.source !== selectedNode.id && edge.target !== selectedNode.id
+            )
+          );
+          alert('Node deleted successfully!');
+        } catch (error) {
+          console.error('Error deleting node:', error);
+          alert('Failed to delete node.');
+        }
       }
     }
   };

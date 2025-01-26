@@ -4,29 +4,24 @@ const mongoose = require('mongoose');
 const app = express();
 const PORT = process.env.PORT || 5001; 
 require('dotenv').config();
+const allowedOrigins = [
+  'https://think-tree-git-main-vostsoldiers-projects.vercel.app', 
+  'http://localhost:3000', 
+];
 const corsOptions = {
   origin: function (origin, callback) {
-    console.log(`Incoming request origin: ${origin}`);
-    if (!origin) return callback(null, true); 
-    const vercelPattern = /^https:\/\/.*\.vercel\.app$/;
-    const isDemo = process.env.DEMO_MODE === 'true';
-
-    if (isDemo) {
-      return callback(null, true);
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
     }
-
-    if (vercelPattern.test(origin)) {
-      return callback(null, true);
-    }
-
-    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-    return callback(new Error(msg), false);
   },
-  credentials: true, 
-  optionsSuccessStatus: 200, 
+  credentials: true,
+  optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
+
 app.use(express.json());
 const thinkTreeRoutes = require('./routes/thinkTree');
 app.use('/api/thinking-trees', thinkTreeRoutes);
