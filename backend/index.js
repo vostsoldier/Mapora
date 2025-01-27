@@ -4,13 +4,12 @@ const mongoose = require('mongoose');
 const app = express();
 const PORT = process.env.PORT || 5001; 
 require('dotenv').config();
-const allowedOrigins = [
-  'https://think-tree-git-main-vostsoldiers-projects.vercel.app', 
-  'http://localhost:3000', 
-];
 const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin) return callback(null, true);
+    const allowedOriginPattern = /^https:\/\/think-tree-.*-vostsoldiers-projects\.vercel\.app$/;
+
+    if (allowedOriginPattern.test(origin) || origin === 'http://localhost:3000') {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
