@@ -16,6 +16,7 @@ import Home from './Home';
 import Signup from './Signup'; 
 import Login from './Login'; 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import api from './api/apiWrapper'; 
 
 function Sidebar() {
   return (
@@ -361,7 +362,7 @@ function App() {
     }
 
     const newNode = {
-      id: isDemo ? `demo-node-${Date.now()}` : `temp-id-${Date.now()}`, // Temporary ID for non-demo
+      id: isDemo ? `demo-node-${Date.now()}` : `temp-id-${Date.now()}`, 
       data: { label: nodeTitle },
       position: { x: Math.random() * 250, y: Math.random() * 250 },
       type: 'default',
@@ -423,7 +424,6 @@ function App() {
         saveTree();
         setContextMenu(null);
         setSelectedNode(null);
-        alert('Node deleted successfully (demo mode).');
       } else {
         try {
           await axios.delete(`/api/thinking-trees/${selectedNode.id}`, {
@@ -492,8 +492,22 @@ function App() {
       return;
     }
 
+    if (isDemo) {
+      setNodes((nds) =>
+        nds.map((node) =>
+          node.id === selectedNode.id
+            ? { ...node, data: { ...node.data, label: editedTitle } }
+            : node
+        )
+      );
+      setIsEditing(false);
+      setSelectedNode(null);
+      saveTree();
+      return;
+    }
+
     try {
-      const response = await axios.put(`/api/thinking-trees/${selectedNode.id}/title`, {
+      const response = await api.put(`/thinking-trees/${selectedNode.id}/title`, {
         title: editedTitle,
       }, {
         headers: {
