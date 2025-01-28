@@ -1,7 +1,8 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom'; 
 import './Home.css';
 import api from './api/apiWrapper';
+import logo from './assets/logo.webp';
 
 function Home({ onLogin }) {
   const navigate = useNavigate();
@@ -21,6 +22,17 @@ function Home({ onLogin }) {
 
   return (
     <div className="home-container">
+      <nav className="navbar">
+        <div className="logo-title">
+          <img src={logo} alt="Logo" className="logo" />
+          <span className="title">Think Tree</span>
+        </div>
+        <div className="nav-links">
+          <Link to="/features">Features</Link>
+          <Link to="/about">About</Link>
+          <Link to="/contact">Contact</Link>
+        </div>
+      </nav>
       <header className="hero-section">
         <h1 className="product-name">Think Tree</h1>
         <p className="tagline">Organize your thoughts and ideas seamlessly.</p>
