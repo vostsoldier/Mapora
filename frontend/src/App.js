@@ -1,3 +1,4 @@
+import 'reactflow/dist/style.css';
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import ReactFlow, {
   addEdge,
