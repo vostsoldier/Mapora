@@ -57,9 +57,9 @@ button {
 }
 
 .btn {
-  background-color: #61dafb;
+  background-color: #10B981; 
   border: none;
-  color: #282c34;
+  color: #FAFAF9; 
   padding: 10px 20px;
   cursor: pointer;
   border-radius: 5px;
@@ -68,7 +68,7 @@ button {
 }
 
 .btn:hover {
-  background-color: #21a1f1;
+  background-color: #059669; 
   transform: translateY(-2px);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
@@ -79,12 +79,12 @@ button {
 }
 
 .btn.cancel {
-  background-color: #f44336;
-  color: white;
+  background-color: #F59E0B;
+  color: #374151; 
 }
 
 .btn.cancel:hover {
-  background-color: #d32f2f;
+  background-color: #D97706;
 }
 
 .modal {
@@ -179,13 +179,13 @@ button {
   align-items: center;
   justify-content: center;
   height: 100vh;
-  background-color: #f0f0f0;
+  background-color: #FAFAF9; 
 }
 
 .home-container .product-name {
   font-size: 48px;
   margin-bottom: 40px;
-  color: #282c34;
+  color: #374151;
 }
 
 .auth-form {
@@ -199,6 +199,7 @@ button {
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  color: #374151;
 }
 
 .auth-form .btn {
@@ -230,12 +231,12 @@ button {
 }
 
 .btn.login {
-  background-color: #61dafb;
-  color: #282c34;
+  background-color: #10B981; /* Fresh Green */
+  color: #FAFAF9; /* Soft Off-White */
 }
 
 .btn.login:hover {
-  background-color: #21a1f1;
+  background-color: #059669; /* Darker Fresh Green */
 }
 
 .toast-container {
@@ -256,13 +257,13 @@ button {
 }
 
 .toast.success {
-  background-color: #4caf50;
+  background-color: #10B981; 
 }
 
 .toast.error {
-  background-color: #f44336;
+  background-color: #F59E0B; 
 }
 
 .toast.info {
-  background-color: #2196f3;
+  background-color: #374151;
 }
