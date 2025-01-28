@@ -17,6 +17,8 @@ import Signup from './Signup';
 import Login from './Login'; 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import api from './api/apiWrapper'; 
+import { motion } from 'framer-motion';
+import Toast from './components/Toast';
 
 function Sidebar() {
   return (
@@ -46,6 +48,17 @@ function App() {
     if (localStorage.getItem('token')) return 'app';
     return 'home';
   });
+  const [toasts, setToasts] = useState([]);
+
+  const addToast = (message, type = 'info') => {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => removeToast(id), 3000);
+  };
+
+  const removeToast = (id) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  };
 
   useEffect(() => {
     if (currentView === 'app') {
@@ -390,9 +403,11 @@ function App() {
         } : node));
         setNodeTitle('');
         setIsAdding(false);
+        addToast('Node added successfully!', 'success'); 
       } catch (error) {
         console.error('Error adding node:', error);
         alert('Failed to add node.');
+        addToast('Failed to add node.', 'error'); 
       }
     }
 
@@ -424,6 +439,7 @@ function App() {
         saveTree();
         setContextMenu(null);
         setSelectedNode(null);
+        addToast('Node deleted successfully.', 'success');
       } else {
         try {
           await axios.delete(`/api/thinking-trees/${selectedNode.id}`, {
@@ -438,9 +454,10 @@ function App() {
             )
           );
           alert('Node deleted successfully!');
+          addToast('Node deleted successfully!', 'success');
         } catch (error) {
           console.error('Error deleting node:', error);
-          alert('Failed to delete node.');
+          addToast('Failed to delete node.', 'error');
         }
       }
     }
@@ -503,6 +520,7 @@ function App() {
       setIsEditing(false);
       setSelectedNode(null);
       saveTree();
+      addToast('Node name updated successfully!', 'success'); 
       return;
     }
 
@@ -526,10 +544,12 @@ function App() {
 
       setIsEditing(false);
       setSelectedNode(null);
-      alert('Node title updated successfully!');
+      alert('Node name updated successfully!');
+      addToast('Node name updated successfully!', 'success'); 
     } catch (error) {
       console.error('Error updating node title:', error);
-      alert('Failed to update node title.');
+      alert('Failed to update node name.');
+      addToast('Failed to update node name.', 'error'); 
     }
   };
 
@@ -779,6 +799,16 @@ function App() {
                       <MiniMap />
                       <Controls />
                       <Background />
+                      {nodes.map((node) => (
+                        <motion.div
+                          key={node.id}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                        </motion.div>
+                      ))}
                     </ReactFlow>
                   </div>
                   {contextMenu ? (
@@ -854,6 +884,7 @@ function App() {
                     </div>
                   ) : null}
                 </div>
+                <Toast toasts={toasts} removeToast={removeToast} />
               </div>
             }
           />
