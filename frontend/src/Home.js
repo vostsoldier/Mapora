@@ -89,7 +89,7 @@ function Home({ onLogin }) {
       </main>
 
       <footer className="footer">
-        <p>&copy; 2024 Think Tree. All rights reserved.</p>
+        <p>&copy; 2023 Think Tree. All rights reserved.</p>
       </footer>
     </div>
   );

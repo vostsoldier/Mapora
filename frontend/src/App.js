@@ -15,7 +15,7 @@ import debounce from 'lodash.debounce';
 import Home from './Home';
 import Signup from './Signup'; 
 import Login from './Login'; 
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import api from './api/apiWrapper'; 
 import { motion } from 'framer-motion';
 import Toast from './components/Toast';
@@ -708,29 +708,6 @@ function App() {
     setCurrentView('home');
   };
 
-  const handleAddLabel = (nodeId) => {
-    setNodes((nds) =>
-      nds.map((node) =>
-        node.id === nodeId
-          ? {
-              ...node,
-              className: 'node-with-label',
-              data: {
-                ...node.data,
-                label: (
-                  <div>
-                    {node.data.label}
-                    <div className="node-label"></div>
-                  </div>
-                ),
-              },
-            }
-          : node
-      )
-    );
-    setContextMenu(null);
-  };
-
   return (
     <Router>
       <ReactFlowProvider>
@@ -745,7 +722,7 @@ function App() {
                 <Sidebar />
                 <div className="main">
                   <header className="App-header">
-                    <Link to="/" className="page-title"><h1>Think Tree</h1></Link>
+                    <h1>Think Tree</h1>
                     <div className="button-container">
                       <button className="btn" onClick={() => setIsAdding(true)}>
                         Add Node
@@ -810,9 +787,7 @@ function App() {
                       onEdgesChange={onEdgesChange}
                       onConnect={onConnectHandler}
                       onElementsRemove={onElementsRemoveHandler}
-                      onNodeContextMenu={(event, node) => {
-                        onNodeContextMenu(event, node);
-                      }}
+                      onNodeContextMenu={onNodeContextMenu}
                       onEdgeClick={onEdgeClickHandler}
                       onNodeDragStop={onNodeDragStopHandler}
                       onLoad={onLoadHandler}
@@ -869,21 +844,6 @@ function App() {
                         }}
                       >
                         Delete
-                      </div>
-                      <div className="context-menu-item add-submenu">
-                        Add     &#9654;
-                        <div className="submenu">
-                          <div
-                            className="context-menu-item"
-                            onClick={() => handleAddLabel(selectedNode.id)}
-                            style={{
-                              padding: '8px 12px',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            Label
-                          </div>
-                        </div>
                       </div>
                     </div>
                   ) : null}

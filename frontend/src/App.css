@@ -74,12 +74,11 @@ button {
 .button-container {
   display: flex;
   gap: 10px;
-  margin-top: 5px; 
 }
 
 .btn {
-  padding: 12px 24px;
-  font-size: 16px;
+  padding: 10px 20px;
+  font-size: 18px;
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -195,38 +194,12 @@ button {
 .context-menu-item:hover {
   background-color: #f0f0f0;
 }
-
-.context-menu-item.add-submenu {
-  position: relative;
-}
-
-.context-menu-item.add-submenu:hover .submenu {
-  display: block;
-}
-
-.submenu {
-  display: none;
-  position: absolute;
-  top: 0;
-  left: 100%;
-  background-color: #fff;
-  box-shadow: 0px 0px 5px rgba(0,0,0,0.2);
-  border-radius: 5px;
-  min-width: 100px;
-}
-
-.submenu .context-menu-item {
-  white-space: nowrap;
-}
-
 .home-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center; 
+  justify-content: center;
   background-color: #FAFAF9;
-  padding: 0px;
-  min-height: 100vh;
 }
 
 .home-container .product-name {
@@ -239,25 +212,18 @@ button {
   display: flex;
   flex-direction: column;
   gap: 15px;
-  width: 100%;
-  max-width: 400px; 
-  background-color: #FFFFFF;
-  padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 300px;
 }
 
 .auth-form input {
-  padding: 12px;
+  padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
   color: #374151; 
-  font-size: 16px;
 }
 
 .auth-form .btn {
-  padding: 12px;
-  font-size: 16px;
+  padding: 10px;
 }
 
 .toggle-link {
@@ -320,82 +286,4 @@ button {
 
 .toast.info {
   background-color: #374151; 
-}
-
-@media (max-width: 600px) {
-  .auth-form {
-    padding: 20px;
-  }
-
-  .btn {
-    width: 100%;
-  }
-}
-
-.login-container, .signup-container {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background-color: #FAFAF9;
-}
-
-.form-container {
-  flex: 1;
-  max-width: 400px;
-  padding: 30px;
-  background-color: #FFFFFF;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  margin-right: 20px; 
-}
-
-.content-container {
-  flex: 1;
-  max-width: 400px;
-  padding: 30px;
-  text-align: center;
-  color: #374151;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.content-container img {
-  width: 100%;
-  max-width: 300px;
-  height: auto;
-  border-radius: 8px;
-}
-
-.content-container ul {
-  list-style-type: disc;
-  padding-left: 20px;
-  text-align: left;
-}
-
-.content-container ul li {
-  margin-bottom: 10px;
-}
-
-.page-title {
-  text-decoration: none;
-  color: inherit;
-}
-
-.node-with-label {
-  position: relative;
-  height: 50px; 
-}
-
-.node-with-label .node-label {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background-color: gray;
-  color: white;
-  text-align: center;
-  padding: 7px 0; 
 }
