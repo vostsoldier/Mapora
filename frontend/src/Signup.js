@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import api from './api/apiWrapper';
 import './Home.css'; 
+import featuresImage from './assets/features.webp'; // Ensure the image exists in this path
 
 function Signup({ onLogin }) {
   const [username, setUsername] = useState('');
@@ -26,36 +27,44 @@ function Signup({ onLogin }) {
   };
 
   return (
-    <div className="home-container">
-      <h1 className="product-name">Think Tree - Signup</h1>
-      <form className="auth-form" onSubmit={handleSignup}>
-        <input
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder="Username"
-          required
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          required
-        />
-        <button type="submit" className="btn signup">
-          Signup
-        </button>
-      </form>
-      <p className="message">{message}</p>
-      <div className="button-group">
-        <button className="btn demo" onClick={handleDemo}>
-          Demo
-        </button>
+    <div className="signup-container">
+      <Link to="/" className="page-title">Think Tree</Link>
+      <div className="form-container">
+        <h1 className="product-name">Think Tree - Signup</h1>
+        <form className="auth-form" onSubmit={handleSignup}>
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Username"
+            required
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            required
+          />
+          <button type="submit" className="btn signup">
+            Signup
+          </button>
+        </form>
+        <p className="message">{message}</p>
+        <p>
+          Already have an account? <a href="/login">Login</a>
+        </p>
       </div>
-      <p>
-        Already have an account? <a href="/">Login</a>
-      </p>
+      <div className="content-container">
+        <h2>Features</h2>
+        <ul>
+          <li>Organize your thoughts seamlessly.</li>
+          <li>Collaborate in real-time with your team.</li>
+          <li>Secure and reliable data storage.</li>
+          <li>Intuitive and user-friendly interface.</li>
+        </ul>
+        <img src={featuresImage} alt="Features" /> 
+      </div>
     </div>
   );
 }
