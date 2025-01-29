@@ -24,7 +24,6 @@ function Home({ onLogin }) {
     <div className="home-container">
       <nav className="navbar">
         <div className="logo-title">
-          <img src={logo} alt="Logo" className="logo" />
           <span className="title">Think Tree</span>
         </div>
         <div className="nav-links">
