@@ -19,6 +19,14 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import api from './api/apiWrapper'; 
 import { motion } from 'framer-motion';
 import Toast from './components/Toast';
+const COLOR_PRESETS = [
+  { name: 'Green', value: '#10B981' },
+  { name: 'Red', value: '#EF4444' },
+  { name: 'Blue', value: '#3B82F6' },
+  { name: 'Yellow', value: '#F59E0B' },
+  { name: 'Purple', value: '#8B5CF6' },
+  { name: 'Gray', value: '#9CA3AF' }, 
+];
 
 function Sidebar() {
   return (
@@ -146,19 +154,26 @@ function App() {
     if (isDemo) {
       const storedNodes = JSON.parse(localStorage.getItem('demo_nodes')) || [];
       const storedEdges = JSON.parse(localStorage.getItem('demo_edges')) || [];
-      setNodes(storedNodes);
-      setEdges(
-        storedEdges.map((edge) => ({
-          ...edge,
-          style: {
-            ...edge.style,
-            animationDirection: edge.reverseAnimated ? 'reverse' : 'normal',
-          },
-        }))
-      );
-      console.log('Loaded nodes and edges from localStorage in demo mode');
-      console.log('Stored Nodes:', storedNodes);
-      console.log('Stored Edges:', storedEdges);
+      
+      console.log('Loading demo data:', { storedNodes, storedEdges });
+      
+      setNodes(storedNodes.map(node => ({
+        ...node,
+        className: node.hasLabel ? 'node-with-label' : '',
+        style: node.style || {},
+        data: {
+          ...node.data,
+          labelText: node.data.labelText || ''
+        }
+      })));
+      
+      setEdges(storedEdges.map((edge) => ({
+        ...edge,
+        style: {
+          ...edge.style,
+          animationDirection: edge.reverseAnimated ? 'reverse' : 'normal',
+        },
+      })));
     } else {
       try {
         const response = await axios.get('/api/thinking-trees/full-tree', {
@@ -252,38 +267,16 @@ function App() {
           reverseAnimated: false,
           style: { animationDirection: 'normal' },
         };
-        setEdges((eds) => addEdge(newEdge, eds));
-        saveTree(); 
+        setEdges((eds) => {
+          const updatedEdges = addEdge(newEdge, eds);
+          localStorage.setItem('demo_edges', JSON.stringify(updatedEdges));
+          return updatedEdges;
+        });
+        localStorage.setItem('demo_nodes', JSON.stringify(nodes));
       } else {
-        try {
-          const response = await axios.post('/api/thinking-trees/edges', {
-            source: params.source,
-            target: params.target,
-          }, {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          });
-
-          const newEdge = response.data; 
-          setEdges((eds) => [
-            ...eds,
-            {
-              id: newEdge._id, 
-              source: newEdge.source,
-              target: newEdge.target,
-              animated: newEdge.animated,
-              reverseAnimated: newEdge.reverseAnimated,
-              style: { animationDirection: newEdge.reverseAnimated ? 'reverse' : 'normal' },
-            },
-          ]);
-        } catch (error) {
-          console.error('Error creating edge:', error);
-          alert('Failed to create edge.');
-        }
       }
     },
-    [authToken, isDemo]
+    [authToken, isDemo, nodes]
   );
 
   const onElementsRemoveHandler = (elementsToRemove) => {
@@ -316,8 +309,21 @@ function App() {
       console.log('Saving tree in demo mode');
       console.log('Nodes:', nodes);
       console.log('Edges:', edges);
-      localStorage.setItem('demo_nodes', JSON.stringify(nodes));
+      
+      const nodesToSave = nodes.map(node => ({
+        ...node,
+        hasLabel: node.hasLabel,
+        className: node.className,
+        style: node.style,
+        data: {
+          ...node.data,
+          labelText: node.data.labelText || ''
+        }
+      }));
+      
+      localStorage.setItem('demo_nodes', JSON.stringify(nodesToSave));
       localStorage.setItem('demo_edges', JSON.stringify(edges));
+      
       console.log('Tree saved locally!');
     } else {
       try {
@@ -374,8 +380,9 @@ function App() {
       return;
     }
 
+    const newNodeId = isDemo ? `demo-node-${Date.now()}` : `temp-id-${Date.now()}`;
     const newNode = {
-      id: isDemo ? `demo-node-${Date.now()}` : `temp-id-${Date.now()}`, 
+      id: newNodeId,
       data: { label: nodeTitle },
       position: { x: Math.random() * 250, y: Math.random() * 250 },
       type: 'default',
@@ -709,25 +716,33 @@ function App() {
   };
 
   const handleAddLabel = (nodeId) => {
-    setNodes((nds) =>
-      nds.map((node) =>
-        node.id === nodeId
-          ? {
-              ...node,
-              className: 'node-with-label',
-              data: {
-                ...node.data,
-                label: (
-                  <div>
-                    {node.data.label}
-                    <div className="node-label"></div>
-                  </div>
-                ),
-              },
-            }
-          : node
-      )
+    const updatedNodes = nodes.map((node) =>
+      node.id === nodeId
+        ? {
+            ...node,
+            className: 'node-with-label',
+            style: {
+              ...node.style,
+              background: '#10B981', 
+              color: 'white',
+            },
+            hasLabel: true,
+          }
+        : node
     );
+    
+    setNodes(updatedNodes);
+    
+    if (isDemo) {
+      const nodesToSave = updatedNodes.map(node => ({
+        ...node,
+        hasLabel: node.hasLabel,
+        className: node.className,
+        style: node.style, 
+      }));
+      localStorage.setItem('demo_nodes', JSON.stringify(nodesToSave));
+    }
+    
     setContextMenu(null);
   };
 
@@ -784,13 +799,59 @@ function App() {
                   {isEditing && (
                     <div className="modal">
                       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <h2>Edit Node Title</h2>
+                        <h2>Edit Node</h2>
                         <input
                           type="text"
                           value={editedTitle}
                           onChange={(e) => setEditedTitle(e.target.value)}
                           placeholder="Enter new node title"
                         />
+                        <div className="color-picker">
+                          <h3>Label Color</h3>
+                          <div className="color-options">
+                            {COLOR_PRESETS.map((color) => (
+                              <div
+                                key={color.name}
+                                className={`color-option ${
+                                  selectedNode?.style?.background === color.value ? 'selected' : ''
+                                }`}
+                                style={{ backgroundColor: color.value }}
+                                onClick={() => {
+                                  const updatedNodes = nodes.map((node) =>
+                                    node.id === selectedNode.id
+                                      ? {
+                                          ...node,
+                                          className: 'node-with-label',
+                                          style: {
+                                            ...node.style,
+                                            background: color.value,
+                                            color: 'white',
+                                          },
+                                          hasLabel: true,
+                                        }
+                                      : node
+                                  );
+                                  setNodes(updatedNodes);
+                                  setSelectedNode({
+                                    ...selectedNode,
+                                    style: {
+                                      ...selectedNode.style,
+                                      background: color.value,
+                                    },
+                                  });
+                                  if (isDemo) {
+                                    localStorage.setItem('demo_nodes', JSON.stringify(updatedNodes));
+                                  }
+                                }}
+                              >
+                                <span className="color-name">{color.name}</span>
+                                {selectedNode?.style?.background === color.value && (
+                                  <span className="selected-indicator">✓</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                         <div className="modal-actions">
                           <button className="btn" onClick={saveEditedTitle}>
                             Save
@@ -824,16 +885,6 @@ function App() {
                       <MiniMap />
                       <Controls />
                       <Background />
-                      {nodes.map((node) => (
-                        <motion.div
-                          key={node.id}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                        </motion.div>
-                      ))}
                     </ReactFlow>
                   </div>
                   {contextMenu ? (
