@@ -8,6 +8,7 @@ import ReactFlow, {
   MiniMap,
   Background,
   ReactFlowProvider,
+  Handle,  
 } from 'reactflow';
 import axios from './api/axios';
 import './App.css';
@@ -27,11 +28,39 @@ const COLOR_PRESETS = [
   { name: 'Purple', value: '#8B5CF6' },
   { name: 'Gray', value: '#9CA3AF' }, 
 ];
+const customNodeTypes = {
+  box: ({ data }) => (
+    <div
+      style={{
+        width: '150px',
+        height: '100px',
+        border: '2px solid #2563EB',
+        borderRadius: '8px',
+        padding: '10px',
+        background: 'white',
+      }}
+    >
+      <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>{data.label}</div>
+      <div style={{ fontSize: '12px' }}>{data.description || 'Add description'}</div>
+      <Handle type="target" position="left" />
+      <Handle type="source" position="right" />
+    </div>
+  ),
+};
 
-function Sidebar() {
+function Sidebar({ onAddBox }) {
   return (
     <aside>
-      <div className="description">Use the "Add Node" button to create nodes.</div>
+      <div className="description">Use the buttons below to add elements:</div>
+      <div className="sidebar-buttons">
+        <div className="dndnode">Node</div>
+        <div className="dndnode box-node" onClick={onAddBox}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
+          </svg>
+          Box
+        </div>
+      </div>
     </aside>
   );
 }
@@ -423,6 +452,25 @@ function App() {
     setIsAdding(false);
   };
 
+  const handleAddBox = () => {
+    const newBox = {
+      id: isDemo ? `demo-box-${Date.now()}` : `temp-box-${Date.now()}`,
+      type: 'box',
+      data: { 
+        label: 'New Box',
+        description: 'Click to edit'
+      },
+      position: { x: Math.random() * 250, y: Math.random() * 250 },
+    };
+
+    setNodes((nds) => [...nds, newBox]);
+    
+    if (isDemo) {
+      const updatedNodes = [...nodes, newBox];
+      localStorage.setItem('demo_nodes', JSON.stringify(updatedNodes));
+    }
+  };
+
   const onNodeContextMenu = useCallback((event, node) => {
     event.preventDefault();
     event.stopPropagation();
@@ -792,7 +840,7 @@ function App() {
           path="/app"
           element={
             <div className="wrapper">
-              <Sidebar />
+              <Sidebar onAddBox={handleAddBox} />
               <div className="main">
                 <header className="App-header">
                   <Link to="/" className="page-title"><h1>Think Tree</h1></Link>
@@ -908,6 +956,7 @@ function App() {
                   <ReactFlow
                     nodes={nodes}
                     edges={edges}
+                    nodeTypes={customNodeTypes}
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
                     onConnect={onConnectHandler}

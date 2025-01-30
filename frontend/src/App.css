@@ -32,6 +32,24 @@ aside {
   cursor: grabbing;
 }
 
+.dndnode.box-node {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ffffff;
+  border: 2px solid #2563EB;
+  color: #2563EB;
+}
+
+.dndnode.box-node:hover {
+  background-color: #f0f5ff;
+}
+
+.box-node svg {
+  width: 20px;
+  height: 20px;
+}
+
 .main {
   flex: 1;
   display: flex;
@@ -563,4 +581,10 @@ button {
 
 .react-flow__edge.bidirectional .react-flow__edge-path {
   animation: flowBidirectional 4s linear infinite;
+}
+
+.sidebar-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
