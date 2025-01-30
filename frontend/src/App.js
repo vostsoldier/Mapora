@@ -770,9 +770,15 @@ function App() {
                           Save Tree
                         </button>
                       )}
-                      <button className="btn cancel" onClick={handleLogout}>
-                        Logout
-                      </button>
+                      {!isDemo ? (
+                        <button className="btn cancel" onClick={handleLogout}>
+                          Logout
+                        </button>
+                      ) : (
+                        <button className="btn signup" onClick={handleSignup}>
+                          Signup
+                        </button>
+                      )}
                     </div>
                   </header>
                   {isAdding && (
