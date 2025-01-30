@@ -7,11 +7,20 @@ require('dotenv').config();
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
-    const allowedOriginPattern = /^https:\/\/think-tree-.*-vostsoldiers-projects\.vercel\.app$/;
+    const allowedOriginPatterns = [
+      /^https:\/\/think-tree-.*-vostsoldiers-projects\.vercel\.app$/,
+      /^https:\/\/think-tree\.vercel\.app$/,
+      'http://localhost:3000'
+    ];
 
-    if (allowedOriginPattern.test(origin) || origin === 'http://localhost:3000') {
+    if (allowedOriginPatterns.some(pattern => 
+      pattern instanceof RegExp 
+        ? pattern.test(origin)
+        : pattern === origin
+    )) {
       callback(null, true);
     } else {
+      console.log('Blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
