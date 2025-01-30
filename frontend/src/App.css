@@ -210,6 +210,7 @@ button {
 
 .react-flow__edge-path {
   stroke-width: 2;
+  stroke-dasharray: 5;
 }
 
 .context-menu {
@@ -543,4 +544,23 @@ button {
 
 .color-option:hover .color-name {
   transform: scale(1.05);
+}
+
+@keyframes flowBidirectional {
+  0% {
+    stroke-dashoffset: 24;
+    animation-timing-function: ease-in;
+  }
+  50% {
+    stroke-dashoffset: -24;
+    animation-timing-function: ease-out;
+  }
+  100% {
+    stroke-dashoffset: 24;
+    animation-timing-function: ease-in;
+  }
+}
+
+.react-flow__edge.bidirectional .react-flow__edge-path {
+  animation: flowBidirectional 4s linear infinite;
 }

@@ -662,6 +662,35 @@ function App() {
     }
   };
 
+  const handleMakeBidirectional = () => {
+    if (selectedEdge) {
+      setEdges((eds) =>
+        eds.map((edge) =>
+          edge.id === selectedEdge.id
+            ? {
+                ...edge,
+                animated: true,
+                style: {
+                  ...edge.style,
+                  animation: 'flowBidirectional 4s linear infinite',
+                },
+                data: {
+                  ...edge.data,
+                  isBidirectional: true,
+                },
+              }
+            : edge
+        )
+      );
+      setEdgeContextMenu(null);
+      setSelectedEdge(null);
+      
+      if (isDemo) {
+        localStorage.setItem('demo_edges', JSON.stringify(edges));
+      }
+    }
+  };
+
   const handleSignup = async () => {
   };
 
@@ -983,6 +1012,16 @@ function App() {
                       }}
                     >
                       Reverse
+                    </div>
+                    <div
+                      className="context-menu-item"
+                      onClick={handleMakeBidirectional}
+                      style={{
+                        padding: '8px 12px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Make Bidirectional
                     </div>
                   </div>
                 ) : null}
