@@ -610,37 +610,20 @@ function App() {
   const handleDelete = async () => {
     if (selectedNode) {
       if (isDemo) {
-        console.log(`Demo mode: Deleting node ${selectedNode.id} locally.`);
-        setNodes((nds) => nds.filter((node) => node.id !== selectedNode.id));
-        setEdges((eds) =>
-          eds.filter(
-            (edge) => edge.source !== selectedNode.id && edge.target !== selectedNode.id
-          )
+        const updatedNodes = nodes.filter((node) => node.id !== selectedNode.id);
+        setNodes(updatedNodes);
+        const updatedEdges = edges.filter(
+          (edge) => edge.source !== selectedNode.id && edge.target !== selectedNode.id
         );
-        saveTree();
-        setContextMenu(null);
-        setSelectedNode(null);
+        setEdges(updatedEdges);
+        localStorage.setItem('demo_nodes', JSON.stringify(updatedNodes));
+        localStorage.setItem('demo_edges', JSON.stringify(updatedEdges));
+        
         addToast('Node deleted successfully.', 'success');
       } else {
-        try {
-          await axios.delete(`/api/thinking-trees/${selectedNode.id}`, {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          });
-          setNodes((nds) => nds.filter((node) => node.id !== selectedNode.id));
-          setEdges((eds) =>
-            eds.filter(
-              (edge) => edge.source !== selectedNode.id && edge.target !== selectedNode.id
-            )
-          );
-          alert('Node deleted successfully!');
-          addToast('Node deleted successfully!', 'success');
-        } catch (error) {
-          console.error('Error deleting node:', error);
-          addToast('Failed to delete node.', 'error');
-        }
       }
+      setContextMenu(null);
+      setSelectedNode(null);
     }
   };
 
