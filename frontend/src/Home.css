@@ -138,7 +138,6 @@
 .features-section, .about-section, .testimonial-section {
   width: 80%;
   max-width: 1000px;
-  margin: 40px 0;
   background-color: #FFFFFF;
   padding: 40px 20px;
   border-radius: 8px;
@@ -342,4 +341,17 @@
   font-weight: bold;
   text-decoration: none;
   padding: 5px 10px;
+}
+.btn.dashboard {
+  background-color: #026AA7;
+  color: white;
+  padding: 15px 30px;
+  font-size: 18px;
+  transition: all 0.3s ease;
+}
+
+.btn.dashboard:hover {
+  background-color: #015485;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }

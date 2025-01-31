@@ -17,6 +17,7 @@ import Home from './Home';
 import Signup from './Signup'; 
 import Login from './Login'; 
 import Features from './Features';
+import About from './About';
 import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import api from './api/apiWrapper'; 
 import { motion, AnimatePresence } from 'framer-motion';
@@ -1279,6 +1280,16 @@ function App() {
               transition={{ duration: 0.6 }}
             >
               <Features />
+            </motion.div>
+          } />
+          <Route path="/about" element={
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.6 }}
+            >
+              <About />
             </motion.div>
           } />
         </Routes>

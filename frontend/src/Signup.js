@@ -14,7 +14,7 @@ function Signup({ onLogin }) {
   const handleSignup = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.post('/users/signup', { username, password });
+      const response = await api.post('/api/users/signup', { username, password });
       setMessage('Signup successful! You can now login.');
       navigate('/');
     } catch (error) {

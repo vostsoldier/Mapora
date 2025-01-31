@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom'; 
 import './Home.css';
 import api from './api/apiWrapper';
@@ -7,6 +7,9 @@ import FadeInSection from './components/FadeInSection';
 
 function Home({ onLogin }) {
   const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    localStorage.getItem('token') || localStorage.getItem('isDemo')
+  );
 
   const handleSignup = () => {
     navigate('/signup');
@@ -37,13 +40,17 @@ function Home({ onLogin }) {
         <h1 className="product-name">Think Tree</h1>
         <p className="tagline">Organize your thoughts and ideas seamlessly.</p>
         <div className="button-group">
-          <button className="btn signup" onClick={handleSignup}>
-            Signup
-          </button>
-          <button className="btn login" onClick={handleLogin}>
-            Login
-          </button>
-          <button className="btn demo" onClick={handleDemo}>
+          {!isAuthenticated && (
+            <>
+              <button className="btn signup" onClick={() => navigate('/signup')}>
+                Signup
+              </button>
+              <button className="btn login" onClick={() => navigate('/login')}>
+                Login
+              </button>
+            </>
+          )}
+          <button className="btn demo" onClick={() => handleDemo()}>
             Demo
           </button>
         </div>
