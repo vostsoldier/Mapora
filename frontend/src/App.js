@@ -201,6 +201,7 @@ function App() {
     return 'home';
   });
   const [toasts, setToasts] = useState([]);
+  const [isSaving, setIsSaving] = useState(false);
 
   const customNodeTypes = {
     box: (props) => (
@@ -460,11 +461,9 @@ function App() {
   }, []);
 
   const saveTree = useCallback(async () => {
+    setIsSaving(true);
+    
     if (isDemo) {
-      console.log('Saving tree in demo mode');
-      console.log('Nodes:', nodes);
-      console.log('Edges:', edges);
-      
       const nodesToSave = nodes.map(node => ({
         ...node,
         hasLabel: node.hasLabel,
@@ -478,8 +477,7 @@ function App() {
       
       localStorage.setItem('demo_nodes', JSON.stringify(nodesToSave));
       localStorage.setItem('demo_edges', JSON.stringify(edges));
-      
-      console.log('Tree saved locally!');
+      await new Promise(resolve => setTimeout(resolve, 2000));
     } else {
       try {
         const nodesData = nodes.map((node) => ({
@@ -511,7 +509,10 @@ function App() {
         console.error('Error saving tree:', error);
         alert('Failed to save tree.');
       }
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
+    
+    setIsSaving(false);
   }, [nodes, edges, authToken, isDemo]);
 
   const debouncedSaveTree = useCallback(
@@ -748,22 +749,19 @@ function App() {
             },
           });
           setEdges((eds) => eds.filter((e) => e.id !== selectedEdge.id));
-          console.log(`Edge ${selectedEdge.id} deleted successfully.`);
         } catch (error) {
           console.error('Error deleting edge:', error);
           alert('Failed to delete edge.');
-        } finally {
-          setEdgeContextMenu(null);
-          setSelectedEdge(null);
         }
       }
+      setEdgeContextMenu(null);
+      setSelectedEdge(null);
     }
   };
 
   const handleEdgeReverse = async () => {
     if (selectedEdge) {
       if (isDemo) {
-        console.log('Reversing edge in demo mode:', selectedEdge.id);
         const updatedEdges = edges.map((e) =>
           e.id === selectedEdge.id
             ? {
@@ -778,7 +776,6 @@ function App() {
         );
         setEdges(updatedEdges);
         localStorage.setItem('demo_edges', JSON.stringify(updatedEdges));
-        console.log('Edge reversed and saved locally');
       } else {
         try {
           const updatedReverseAnimated = !selectedEdge.reverseAnimated;
@@ -805,16 +802,13 @@ function App() {
                 : e
             )
           );
-
-          console.log(`Edge ${updatedEdge.id} animation direction reversed.`);
         } catch (error) {
           console.error('Error reversing edge animation:', error);
           alert('Failed to reverse edge animation.');
-        } finally {
-          setEdgeContextMenu(null);
-          setSelectedEdge(null);
         }
       }
+      setEdgeContextMenu(null);
+      setSelectedEdge(null);
     }
   };
 
@@ -833,6 +827,34 @@ function App() {
                 data: {
                   ...edge.data,
                   isBidirectional: true,
+                },
+              }
+            : edge
+        )
+      );
+      setEdgeContextMenu(null);
+      setSelectedEdge(null);
+      
+      if (isDemo) {
+        localStorage.setItem('demo_edges', JSON.stringify(edges));
+      }
+    }
+  };
+  const handleNormalFlow = () => {
+    if (selectedEdge) {
+      setEdges((eds) =>
+        eds.map((edge) =>
+          edge.id === selectedEdge.id
+            ? {
+                ...edge,
+                animated: true,
+                style: {
+                  ...edge.style,
+                  animation: null,
+                },
+                data: {
+                  ...edge.data,
+                  isBidirectional: false,
                 },
               }
             : edge
@@ -1085,7 +1107,7 @@ function App() {
                     <Background />
                   </ReactFlow>
                 </div>
-                {contextMenu ? (
+                {contextMenu && (
                   <div
                     className="context-menu"
                     style={{
@@ -1119,23 +1141,25 @@ function App() {
                     >
                       Delete
                     </div>
-                    <div className="context-menu-item add-submenu">
-                      Add     &#9654;
-                      <div className="submenu">
-                        <div
-                          className="context-menu-item"
-                          onClick={() => handleAddLabel(selectedNode.id)}
-                          style={{
-                            padding: '8px 12px',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          Label
+                    {!selectedNode.hasLabel && (
+                      <div className="context-menu-item add-submenu">
+                        Add     &#9654;
+                        <div className="submenu">
+                          <div
+                            className="context-menu-item"
+                            onClick={() => handleAddLabel(selectedNode.id)}
+                            style={{
+                              padding: '8px 12px',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Label
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
                   </div>
-                ) : null}
+                )}
                 {edgeContextMenu ? (
                   <div
                     className="context-menu"
@@ -1160,28 +1184,50 @@ function App() {
                     >
                       Delete
                     </div>
-                    <div
-                      className="context-menu-item"
-                      onClick={handleEdgeReverse}
-                      style={{
-                        padding: '8px 12px',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Reverse
-                    </div>
-                    <div
-                      className="context-menu-item"
-                      onClick={handleMakeBidirectional}
-                      style={{
-                        padding: '8px 12px',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Make Bidirectional
-                    </div>
+                    {!selectedEdge?.data?.isBidirectional && (
+                      <>
+                        <div
+                          className="context-menu-item"
+                          onClick={handleEdgeReverse}
+                          style={{
+                            padding: '8px 12px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Reverse
+                        </div>
+                        <div
+                          className="context-menu-item"
+                          onClick={handleMakeBidirectional}
+                          style={{
+                            padding: '8px 12px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Both Ways
+                        </div>
+                      </>
+                    )}
+                    {selectedEdge?.data?.isBidirectional && (
+                      <div
+                        className="context-menu-item"
+                        onClick={handleNormalFlow}
+                        style={{
+                          padding: '8px 12px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Normal Flow
+                      </div>
+                    )}
                   </div>
                 ) : null}
+                {isSaving && (
+                  <div className="saving-indicator">
+                    <div className="saving-dot"></div>
+                    Saving...
+                  </div>
+                )}
               </div>
               <Toast toasts={toasts} removeToast={removeToast} />
             </div>
