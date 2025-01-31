@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from './api/apiWrapper';
 import './Home.css'; 
-import featuresImage from './assets/features.webp'; // Ensure the image exists in this path
+import featuresImage from './assets/features.webp'; 
+import { motion } from 'framer-motion';
 
 function Signup({ onLogin }) {
   const [username, setUsername] = useState('');
@@ -27,7 +28,13 @@ function Signup({ onLogin }) {
   };
 
   return (
-    <div className="signup-container">
+    <motion.div
+      className="signup-container"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.6 }}
+    >
       <Link to="/" className="page-title">Think Tree</Link>
       <div className="form-container">
         <h1 className="product-name">Think Tree - Signup</h1>
@@ -65,7 +72,7 @@ function Signup({ onLogin }) {
         </ul>
         <img src={featuresImage} alt="Features" /> 
       </div>
-    </div>
+    </motion.div>
   );
 }
 

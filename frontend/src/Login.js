@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import api from './api/apiWrapper';
 import './Home.css'; 
-import featuresImage from './assets/features.webp'; // Add an image in the specified path
+import featuresImage from './assets/features.webp'; 
 
 function Login({ onLogin }) {
   const [username, setUsername] = useState('');
@@ -29,7 +30,13 @@ function Login({ onLogin }) {
   };
 
   return (
-    <div className="login-container">
+    <motion.div
+      className="login-container"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.6 }}
+    >
       <Link to="/" className="page-title">Think Tree</Link>
       <div className="form-container">
         <h1 className="product-name">Think Tree - Login</h1>
@@ -67,7 +74,7 @@ function Login({ onLogin }) {
         </ul>
         <img src={featuresImage} alt="Features" /> 
       </div>
-    </div>
+    </motion.div>
   );
 }
 

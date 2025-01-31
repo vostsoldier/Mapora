@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import './Home.css';
 import api from './api/apiWrapper';
 import logo from './assets/logo.webp';
+import FadeInSection from './components/FadeInSection';
 
 function Home({ onLogin }) {
   const navigate = useNavigate();
@@ -48,44 +49,50 @@ function Home({ onLogin }) {
         </div>
       </header>
       <main className="main-content">
-        <section className="features-section">
-          <h2>Features</h2>
-          <div className="features">
-            <div className="feature-item">
-              <h3>Intuitive Interface</h3>
-              <p>Easy-to-use interface to map out your ideas.</p>
+        <FadeInSection>
+          <section className="features-section">
+            <h2>Features</h2>
+            <div className="features">
+              <div className="feature-item">
+                <h3>Intuitive Interface</h3>
+                <p>Easy-to-use interface to map out your ideas.</p>
+              </div>
+              <div className="feature-item">
+                <h3>Real-time Collaboration</h3>
+                <p>Work with your team in real-time.</p>
+              </div>
+              <div className="feature-item">
+                <h3>Secure Storage</h3>
+                <p>Your data is safe with our secure storage solutions.</p>
+              </div>
             </div>
-            <div className="feature-item">
-              <h3>Real-time Collaboration</h3>
-              <p>Work with your team in real-time.</p>
-            </div>
-            <div className="feature-item">
-              <h3>Secure Storage</h3>
-              <p>Your data is safe with our secure storage solutions.</p>
-            </div>
-          </div>
-        </section>
+          </section>
+        </FadeInSection>
 
-        <section className="about-section">
-          <h2>About Think Tree</h2>
-          <p>
-            Think Tree is a powerful tool designed to help you organize your thoughts, collaborate with others, and visualize complex ideas effortlessly. Whether you're brainstorming solo or working with a team, Think Tree provides the features you need to bring your ideas to life.
-          </p>
-        </section>
+        <FadeInSection>
+          <section className="about-section">
+            <h2>About Think Tree</h2>
+            <p>
+              Think Tree is a powerful tool designed to help you organize your thoughts, collaborate with others, and visualize complex ideas effortlessly. Whether you're brainstorming solo or working with a team, Think Tree provides the features you need to bring your ideas to life.
+            </p>
+          </section>
+        </FadeInSection>
 
-        <section className="testimonial-section">
-          <h2>What Our Users Say</h2>
-          <div className="testimonials">
-            <div className="testimonial-item">
-              <p>"Think Tree has transformed the way I organize my projects. It's intuitive and incredibly powerful."</p>
-              <h4>- Jane Doe</h4>
+        <FadeInSection>
+          <section className="testimonial-section">
+            <h2>What Our Users Say</h2>
+            <div className="testimonials">
+              <div className="testimonial-item">
+                <p>"Think Tree has transformed the way I organize my projects. It's intuitive and incredibly powerful."</p>
+                <h4>- Jane Doe</h4>
+              </div>
+              <div className="testimonial-item">
+                <p>"Collaborating with my team has never been easier. Think Tree keeps us all on the same page."</p>
+                <h4>- John Smith</h4>
+              </div>
             </div>
-            <div className="testimonial-item">
-              <p>"Collaborating with my team has never been easier. Think Tree keeps us all on the same page."</p>
-              <h4>- John Smith</h4>
-            </div>
-          </div>
-        </section>
+          </section>
+        </FadeInSection>
       </main>
 
       <footer className="footer">

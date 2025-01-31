@@ -16,9 +16,10 @@ import debounce from 'lodash.debounce';
 import Home from './Home';
 import Signup from './Signup'; 
 import Login from './Login'; 
+import Features from './Features';
 import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import api from './api/apiWrapper'; 
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Toast from './components/Toast';
 const COLOR_PRESETS = [
   { name: 'Green', value: '#10B981' },
@@ -958,284 +959,330 @@ function App() {
 
   return (
     <ReactFlowProvider>
-      <Routes>
-        <Route path="/" element={<Home onLogin={handleLogin} />} />
-        <Route path="/signup" element={<Signup onLogin={handleLogin} />} />
-        <Route path="/login" element={<Login onLogin={handleLogin} />} /> 
-        <Route
-          path="/app"
-          element={
-            <div className="wrapper">
-              <Sidebar onAddBox={handleAddBox} />
-              <div className="main">
-                <header className="App-header">
-                  <Link to="/" className="page-title"><h1>Think Tree</h1></Link>
-                  <div className="button-container">
-                    <button className="btn" onClick={() => setIsAdding(true)}>
-                      Add Node
-                    </button>
-                    {!isDemo && (
-                      <button className="btn" onClick={saveTree}>
-                        Save Tree
-                      </button>
-                    )}
-                    {!isDemo ? (
-                      <button className="btn cancel" onClick={handleLogout}>
-                        Logout
-                      </button>
-                    ) : (
-                      <button className="btn signup" onClick={handleDemoSignup}>
-                        Signup
-                      </button>
-                    )}
-                  </div>
-                </header>
-                {isAdding && (
-                  <div className="modal">
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                      <h2>Add New Node</h2>
-                      <input
-                        type="text"
-                        value={nodeTitle}
-                        onChange={(e) => setNodeTitle(e.target.value)}
-                        placeholder="Enter node title"
-                      />
-                      <div className="modal-actions">
-                        <button className="btn" onClick={addNode}>
-                          Add
+      <AnimatePresence mode="wait">
+        <Routes>
+          <Route path="/" element={
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.6 }}
+            >
+              <Home onLogin={handleLogin} />
+            </motion.div>
+          } />
+          <Route path="/signup" element={
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.6 }}
+            >
+              <Signup onLogin={handleLogin} />
+            </motion.div>
+          } />
+          <Route path="/login" element={
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.6 }}
+            >
+              <Login onLogin={handleLogin} />
+            </motion.div>
+          } /> 
+          <Route
+            path="/app"
+            element={
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.6 }}
+              >
+                <div className="wrapper">
+                  <Sidebar onAddBox={handleAddBox} />
+                  <div className="main">
+                    <header className="App-header">
+                      <Link to="/" className="page-title"><h1>Think Tree</h1></Link>
+                      <div className="button-container">
+                        <button className="btn" onClick={() => setIsAdding(true)}>
+                          Add Node
                         </button>
-                        <button className="btn cancel" onClick={() => setIsAdding(false)}>
-                          Cancel
-                        </button>
+                        {!isDemo && (
+                          <button className="btn" onClick={saveTree}>
+                            Save Tree
+                          </button>
+                        )}
+                        {!isDemo ? (
+                          <button className="btn cancel" onClick={handleLogout}>
+                            Logout
+                          </button>
+                        ) : (
+                          <button className="btn signup" onClick={handleDemoSignup}>
+                            Signup
+                          </button>
+                        )}
                       </div>
-                    </div>
-                  </div>
-                )}
-                {isEditing && (
-                  <div className="modal">
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                      <h2>Edit Node</h2>
-                      <input
-                        type="text"
-                        value={editedTitle}
-                        onChange={(e) => setEditedTitle(e.target.value)}
-                        placeholder="Enter new node title"
-                      />
-                      <div className="color-picker">
-                        <h3>Label Color</h3>
-                        <div className="color-options">
-                          {COLOR_PRESETS.map((color) => (
-                            <div
-                              key={color.name}
-                              className={`color-option ${
-                                selectedNode?.style?.background === color.value ? 'selected' : ''
-                              }`}
-                              style={{ backgroundColor: color.value }}
-                              onClick={() => {
-                                const updatedNodes = nodes.map((node) =>
-                                  node.id === selectedNode.id
-                                    ? {
-                                        ...node,
-                                        className: 'node-with-label',
-                                        style: {
-                                          ...node.style,
-                                          background: color.value,
-                                          color: 'white',
-                                        },
-                                        hasLabel: true,
-                                      }
-                                    : node
-                                );
-                                setNodes(updatedNodes);
-                                setSelectedNode({
-                                  ...selectedNode,
-                                  style: {
-                                    ...selectedNode.style,
-                                    background: color.value,
-                                  },
-                                });
-                                if (isDemo) {
-                                  localStorage.setItem('demo_nodes', JSON.stringify(updatedNodes));
-                                }
-                              }}
-                            >
-                              <span className="color-name">{color.name}</span>
-                              {selectedNode?.style?.background === color.value && (
-                                <span className="selected-indicator">✓</span>
-                              )}
-                            </div>
-                          ))}
+                    </header>
+                    {isAdding && (
+                      <div className="modal">
+                        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                          <h2>Add New Node</h2>
+                          <input
+                            type="text"
+                            value={nodeTitle}
+                            onChange={(e) => setNodeTitle(e.target.value)}
+                            placeholder="Enter node title"
+                          />
+                          <div className="modal-actions">
+                            <button className="btn" onClick={addNode}>
+                              Add
+                            </button>
+                            <button className="btn cancel" onClick={() => setIsAdding(false)}>
+                              Cancel
+                            </button>
+                          </div>
                         </div>
                       </div>
-                      <div className="modal-actions">
-                        <button className="btn" onClick={saveEditedTitle}>
-                          Save
-                        </button>
-                        <button className="btn cancel" onClick={cancelEditing}>
-                          Cancel
-                        </button>
+                    )}
+                    {isEditing && (
+                      <div className="modal">
+                        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                          <h2>Edit Node</h2>
+                          <input
+                            type="text"
+                            value={editedTitle}
+                            onChange={(e) => setEditedTitle(e.target.value)}
+                            placeholder="Enter new node title"
+                          />
+                          <div className="color-picker">
+                            <h3>Label Color</h3>
+                            <div className="color-options">
+                              {COLOR_PRESETS.map((color) => (
+                                <div
+                                  key={color.name}
+                                  className={`color-option ${
+                                    selectedNode?.style?.background === color.value ? 'selected' : ''
+                                  }`}
+                                  style={{ backgroundColor: color.value }}
+                                  onClick={() => {
+                                    const updatedNodes = nodes.map((node) =>
+                                      node.id === selectedNode.id
+                                        ? {
+                                            ...node,
+                                            className: 'node-with-label',
+                                            style: {
+                                              ...node.style,
+                                              background: color.value,
+                                              color: 'white',
+                                            },
+                                            hasLabel: true,
+                                          }
+                                        : node
+                                    );
+                                    setNodes(updatedNodes);
+                                    setSelectedNode({
+                                      ...selectedNode,
+                                      style: {
+                                        ...selectedNode.style,
+                                        background: color.value,
+                                      },
+                                    });
+                                    if (isDemo) {
+                                      localStorage.setItem('demo_nodes', JSON.stringify(updatedNodes));
+                                    }
+                                  }}
+                                >
+                                  <span className="color-name">{color.name}</span>
+                                  {selectedNode?.style?.background === color.value && (
+                                    <span className="selected-indicator">✓</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="modal-actions">
+                            <button className="btn" onClick={saveEditedTitle}>
+                              Save
+                            </button>
+                            <button className="btn cancel" onClick={cancelEditing}>
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
                       </div>
+                    )}
+                    <div className="react-flow-wrapper">
+                      <ReactFlow
+                        nodes={nodes}
+                        edges={edges}
+                        nodeTypes={customNodeTypes}
+                        onNodesChange={onNodesChange}
+                        onEdgesChange={onEdgesChange}
+                        onConnect={onConnectHandler}
+                        onElementsRemove={onElementsRemoveHandler}
+                        onNodeContextMenu={(event, node) => {
+                          onNodeContextMenu(event, node);
+                        }}
+                        onEdgeClick={onEdgeClickHandler}
+                        onNodeDragStop={onNodeDragStopHandler}
+                        onLoad={onLoadHandler}
+                        deleteKeyCode={46}
+                        snapToGrid={true}
+                        snapGrid={[15, 15]}
+                        fitView
+                      >
+                        <MiniMap />
+                        <Controls />
+                        <Background />
+                      </ReactFlow>
                     </div>
-                  </div>
-                )}
-                <div className="react-flow-wrapper">
-                  <ReactFlow
-                    nodes={nodes}
-                    edges={edges}
-                    nodeTypes={customNodeTypes}
-                    onNodesChange={onNodesChange}
-                    onEdgesChange={onEdgesChange}
-                    onConnect={onConnectHandler}
-                    onElementsRemove={onElementsRemoveHandler}
-                    onNodeContextMenu={(event, node) => {
-                      onNodeContextMenu(event, node);
-                    }}
-                    onEdgeClick={onEdgeClickHandler}
-                    onNodeDragStop={onNodeDragStopHandler}
-                    onLoad={onLoadHandler}
-                    deleteKeyCode={46}
-                    snapToGrid={true}
-                    snapGrid={[15, 15]}
-                    fitView
-                  >
-                    <MiniMap />
-                    <Controls />
-                    <Background />
-                  </ReactFlow>
-                </div>
-                {contextMenu && (
-                  <div
-                    className="context-menu"
-                    style={{
-                      top: contextMenu.mouseY,
-                      left: contextMenu.mouseX,
-                      position: 'absolute',
-                      backgroundColor: '#fff',
-                      boxShadow: '0px 0px 5px rgba(0,0,0,0.2)',
-                      borderRadius: '5px',
-                      zIndex: 1000,
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div
-                      className="context-menu-item"
-                      onClick={handleEdit}
-                      style={{
-                        padding: '8px 12px',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Edit
-                    </div>
-                    <div
-                      className="context-menu-item"
-                      onClick={handleDelete}
-                      style={{
-                        padding: '8px 12px',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Delete
-                    </div>
-                    {!selectedNode.hasLabel && (
-                      <div className="context-menu-item add-submenu">
-                        Add     &#9654;
-                        <div className="submenu">
+                    {contextMenu && (
+                      <div
+                        className="context-menu"
+                        style={{
+                          top: contextMenu.mouseY,
+                          left: contextMenu.mouseX,
+                          position: 'absolute',
+                          backgroundColor: '#fff',
+                          boxShadow: '0px 0px 5px rgba(0,0,0,0.2)',
+                          borderRadius: '5px',
+                          zIndex: 1000,
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div
+                          className="context-menu-item"
+                          onClick={handleEdit}
+                          style={{
+                            padding: '8px 12px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Edit
+                        </div>
+                        <div
+                          className="context-menu-item"
+                          onClick={handleDelete}
+                          style={{
+                            padding: '8px 12px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Delete
+                        </div>
+                        {!selectedNode.hasLabel && (
+                          <div className="context-menu-item add-submenu">
+                            Add     &#9654;
+                            <div className="submenu">
+                              <div
+                                className="context-menu-item"
+                                onClick={() => handleAddLabel(selectedNode.id)}
+                                style={{
+                                  padding: '8px 12px',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                Label
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {edgeContextMenu ? (
+                      <div
+                        className="context-menu"
+                        style={{
+                          top: edgeContextMenu.mouseY,
+                          left: edgeContextMenu.mouseX,
+                          position: 'absolute',
+                          backgroundColor: '#fff',
+                          boxShadow: '0px 0px 5px rgba(0,0,0,0.2)',
+                          borderRadius: '5px',
+                          zIndex: 1000,
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div
+                          className="context-menu-item"
+                          onClick={handleEdgeDelete}
+                          style={{
+                            padding: '8px 12px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Delete
+                        </div>
+                        {!selectedEdge?.data?.isBidirectional && (
+                          <>
+                            <div
+                              className="context-menu-item"
+                              onClick={handleEdgeReverse}
+                              style={{
+                                padding: '8px 12px',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Reverse
+                            </div>
+                            <div
+                              className="context-menu-item"
+                              onClick={handleMakeBidirectional}
+                              style={{
+                                padding: '8px 12px',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Both Ways
+                            </div>
+                          </>
+                        )}
+                        {selectedEdge?.data?.isBidirectional && (
                           <div
                             className="context-menu-item"
-                            onClick={() => handleAddLabel(selectedNode.id)}
+                            onClick={handleNormalFlow}
                             style={{
                               padding: '8px 12px',
                               cursor: 'pointer',
                             }}
                           >
-                            Label
+                            Normal Flow
                           </div>
-                        </div>
+                        )}
+                      </div>
+                    ) : null}
+                    {isSaving && (
+                      <div className="saving-indicator">
+                        <div className="saving-dot"></div>
+                        Saving...
                       </div>
                     )}
                   </div>
-                )}
-                {edgeContextMenu ? (
-                  <div
-                    className="context-menu"
-                    style={{
-                      top: edgeContextMenu.mouseY,
-                      left: edgeContextMenu.mouseX,
-                      position: 'absolute',
-                      backgroundColor: '#fff',
-                      boxShadow: '0px 0px 5px rgba(0,0,0,0.2)',
-                      borderRadius: '5px',
-                      zIndex: 1000,
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div
-                      className="context-menu-item"
-                      onClick={handleEdgeDelete}
-                      style={{
-                        padding: '8px 12px',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Delete
+                  <Toast toasts={toasts} removeToast={removeToast} />
+                  {isLoading && (
+                    <div className="loading-screen">
+                      <div className="loading-spinner"></div>
+                      <div className="loading-text">Loading Demo Mode...</div>
                     </div>
-                    {!selectedEdge?.data?.isBidirectional && (
-                      <>
-                        <div
-                          className="context-menu-item"
-                          onClick={handleEdgeReverse}
-                          style={{
-                            padding: '8px 12px',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          Reverse
-                        </div>
-                        <div
-                          className="context-menu-item"
-                          onClick={handleMakeBidirectional}
-                          style={{
-                            padding: '8px 12px',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          Both Ways
-                        </div>
-                      </>
-                    )}
-                    {selectedEdge?.data?.isBidirectional && (
-                      <div
-                        className="context-menu-item"
-                        onClick={handleNormalFlow}
-                        style={{
-                          padding: '8px 12px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Normal Flow
-                      </div>
-                    )}
-                  </div>
-                ) : null}
-                {isSaving && (
-                  <div className="saving-indicator">
-                    <div className="saving-dot"></div>
-                    Saving...
-                  </div>
-                )}
-              </div>
-              <Toast toasts={toasts} removeToast={removeToast} />
-              {isLoading && (
-                <div className="loading-screen">
-                  <div className="loading-spinner"></div>
-                  <div className="loading-text">Loading Demo Mode...</div>
+                  )}
                 </div>
-              )}
-            </div>
-          }
-        />
-      </Routes>
+              </motion.div>
+            }
+          />
+          <Route path="/features" element={
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.6 }}
+            >
+              <Features />
+            </motion.div>
+          } />
+        </Routes>
+      </AnimatePresence>
     </ReactFlowProvider>
   );
 }
