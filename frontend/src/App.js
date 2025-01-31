@@ -28,24 +28,139 @@ const COLOR_PRESETS = [
   { name: 'Purple', value: '#8B5CF6' },
   { name: 'Gray', value: '#9CA3AF' }, 
 ];
-const customNodeTypes = {
-  box: ({ data }) => (
+const Box = ({ data, id, isDemo, setNodes, nodes }) => { 
+  const [dimensions, setDimensions] = useState({
+    width: data.width || 150,
+    height: data.height || 100
+  });
+
+  const handleResize = (e, direction) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const targetElement = e.target;
+    targetElement.setPointerCapture(e.pointerId);
+    
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startWidth = dimensions.width;
+    const startHeight = dimensions.height;
+
+    const handlePointerMove = (moveEvent) => {
+      moveEvent.preventDefault();
+      moveEvent.stopPropagation();
+
+      let newDimensions = { ...dimensions };
+
+      if (direction.includes('right')) {
+        const dx = moveEvent.clientX - startX;
+        newDimensions.width = Math.max(50, startWidth + dx);
+      }
+      
+      if (direction.includes('bottom')) {
+        const dy = moveEvent.clientY - startY;
+        newDimensions.height = Math.max(50, startHeight + dy);
+      }
+
+      setDimensions(newDimensions);
+      const updatedNodes = nodes.map(node => {
+        if (node.id === id) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              width: newDimensions.width,
+              height: newDimensions.height
+            }
+          };
+        }
+        return node;
+      });
+
+      setNodes(updatedNodes);
+
+      if (isDemo) {
+        localStorage.setItem('demo_nodes', JSON.stringify(updatedNodes));
+      }
+    };
+
+    const handlePointerUp = () => {
+      targetElement.releasePointerCapture(e.pointerId);
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
+    };
+
+    document.addEventListener('pointermove', handlePointerMove);
+    document.addEventListener('pointerup', handlePointerUp);
+  };
+
+  return (
     <div
       style={{
-        width: '150px',
-        height: '100px',
-        border: '2px solid #2563EB',
+        width: `${dimensions.width}px`,
+        height: `${dimensions.height}px`,
+        border: '2px solid black',
         borderRadius: '8px',
-        padding: '10px',
-        background: 'white',
+        background: 'transparent',
+        position: 'relative',
+        cursor: 'move', 
+        userSelect: 'none' 
       }}
     >
-      <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>{data.label}</div>
-      <div style={{ fontSize: '12px' }}>{data.description || 'Add description'}</div>
-      <Handle type="target" position="left" />
-      <Handle type="source" position="right" />
+      <Handle type="target" position="left" style={{ background: '#555' }} />
+      <Handle type="source" position="right" style={{ background: '#555' }} />
+      <div
+        className="resize-handle right"
+        style={{
+          position: 'absolute',
+          right: '-2px',
+          top: '0',
+          width: '4px',
+          height: '100%',
+          cursor: 'ew-resize',
+          touchAction: 'none',
+          zIndex: 1,
+          opacity: 0
+        }}
+        onPointerDown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleResize(e, ['right']);
+        }}
+      />
+      <div
+        className="resize-handle bottom"
+        style={{
+          position: 'absolute',
+          bottom: '-2px',
+          left: '0',
+          width: '100%',
+          height: '4px',
+          cursor: 'ns-resize',
+          touchAction: 'none',
+          zIndex: 1,
+          opacity: 0
+        }}
+        onPointerDown={(e) => handleResize(e, ['bottom'])}
+      />
+      <div
+        className="resize-handle corner"
+        style={{
+          position: 'absolute',
+          bottom: '-3px',
+          right: '-3px',
+          width: '6px',
+          height: '6px',
+          cursor: 'nwse-resize',
+          touchAction: 'none',
+          zIndex: 2,
+          opacity: 0,
+          borderRadius: '50%'
+        }}
+        onPointerDown={(e) => handleResize(e, ['right', 'bottom'])}
+      />
     </div>
-  ),
+  );
 };
 
 function Sidebar({ onAddBox }) {
@@ -53,7 +168,6 @@ function Sidebar({ onAddBox }) {
     <aside>
       <div className="description">Use the buttons below to add elements:</div>
       <div className="sidebar-buttons">
-        <div className="dndnode">Node</div>
         <div className="dndnode box-node" onClick={onAddBox}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
@@ -87,6 +201,17 @@ function App() {
     return 'home';
   });
   const [toasts, setToasts] = useState([]);
+
+  const customNodeTypes = {
+    box: (props) => (
+      <Box 
+        {...props} 
+        isDemo={isDemo} 
+        setNodes={setNodes} 
+        nodes={nodes} 
+      />
+    ),
+  };
 
   const addToast = (message, type = 'info') => {
     const id = Date.now();

@@ -588,3 +588,33 @@ button {
   flex-direction: column;
   gap: 10px;
 }
+
+.resize-handle {
+  position: absolute;
+  background: transparent;
+  z-index: 1;
+}
+
+.resize-handle:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.resize-handle.right {
+  right: -2px;
+  width: 4px !important;
+}
+
+.resize-handle.bottom {
+  bottom: -2px;
+  height: 4px !important;
+}
+
+.resize-handle.corner {
+  width: 6px !important;
+  height: 6px !important;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.resize-handle.corner:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
