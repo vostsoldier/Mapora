@@ -202,6 +202,7 @@ function App() {
   });
   const [toasts, setToasts] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const customNodeTypes = {
     box: (props) => (
@@ -873,46 +874,41 @@ function App() {
   };
 
   const handleLogin = (token, demo = false) => {
-    setAuthToken(token);
     if (demo) {
+      setIsLoading(true);
+      setAuthToken(token);
       setIsDemo(true);
-      localStorage.setItem('isDemo', 'true'); 
-      console.log('Demo mode enabled');
-      let storedNodes = JSON.parse(localStorage.getItem('demo_nodes'));
-      let storedEdges = JSON.parse(localStorage.getItem('demo_edges'));
+      localStorage.setItem('isDemo', 'true');
+      setTimeout(() => {
+        let storedNodes = JSON.parse(localStorage.getItem('demo_nodes'));
+        let storedEdges = JSON.parse(localStorage.getItem('demo_edges'));
 
-      if (!storedNodes || storedNodes.length === 0) {
-        const centralNode = {
-          id: `demo-node-1`,
-          data: { label: 'Central Node' },
-          position: { x: 250, y: 250 },
-          type: 'default',
-        };
-        storedNodes = [centralNode];
-        localStorage.setItem('demo_nodes', JSON.stringify(storedNodes));
-      }
+        if (!storedNodes || storedNodes.length === 0) {
+          const centralNode = {
+            id: `demo-node-1`,
+            data: { label: 'Central Node' },
+            position: { x: 250, y: 250 },
+            type: 'default',
+          };
+          storedNodes = [centralNode];
+          localStorage.setItem('demo_nodes', JSON.stringify(storedNodes));
+        }
 
-      if (!storedEdges) {
-        storedEdges = [];
-        localStorage.setItem('demo_edges', JSON.stringify(storedEdges));
-      }
+        if (!storedEdges) {
+          storedEdges = [];
+          localStorage.setItem('demo_edges', JSON.stringify(storedEdges));
+        }
 
-      setNodes(storedNodes);
-      setEdges(
-        storedEdges.map((edge) => ({
-          ...edge,
-          style: {
-            ...edge.style,
-            animationDirection: edge.reverseAnimated ? 'reverse' : 'normal',
-          },
-        }))
-      );
-    } else {
-      localStorage.setItem('token', token);
-      localStorage.removeItem('isDemo');
-      setIsDemo(false);
+        setNodes(storedNodes);
+        setEdges(storedEdges);
+        document.querySelector('.loading-screen').classList.add('fade-out');
+        setTimeout(() => {
+          setIsLoading(false);
+          setCurrentView('app');
+        }, 1000);
+        
+      }, 3000);
     }
-    setCurrentView('app');
   };
 
   const handleLogout = () => {
@@ -1230,6 +1226,12 @@ function App() {
                 )}
               </div>
               <Toast toasts={toasts} removeToast={removeToast} />
+              {isLoading && (
+                <div className="loading-screen">
+                  <div className="loading-spinner"></div>
+                  <div className="loading-text">Loading Demo Mode...</div>
+                </div>
+              )}
             </div>
           }
         />
