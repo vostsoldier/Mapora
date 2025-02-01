@@ -299,7 +299,9 @@ button {
   background-color: #FFFFFF;
   margin-bottom: 40px;
 }
-
+.features-section h1{
+  text-align: center;
+}
 .features-section, 
 .about-section, 
 .testimonial-section {
