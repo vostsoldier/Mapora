@@ -1015,13 +1015,13 @@ function App() {
                             Save Tree
                           </button>
                         )}
-                        {!isDemo ? (
-                          <button className="btn cancel" onClick={handleLogout}>
-                            Logout
-                          </button>
-                        ) : (
+                        {isDemo && !authToken ? (
                           <button className="btn signup" onClick={handleDemoSignup}>
                             Signup
+                          </button>
+                        ) : (
+                          <button className="btn cancel" onClick={handleLogout}>
+                            Logout
                           </button>
                         )}
                       </div>
