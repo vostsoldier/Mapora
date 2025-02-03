@@ -5,27 +5,13 @@ const app = express();
 const PORT = process.env.PORT || 5001; 
 require('dotenv').config();
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    const allowedOriginPatterns = [
-      /^https:\/\/think-tree-.*-vostsoldiers-projects\.vercel\.app$/,
-      /^https:\/\/think-tree\.vercel\.app$/,
-      'http://localhost:3000'
-    ];
-
-    if (allowedOriginPatterns.some(pattern => 
-      pattern instanceof RegExp 
-        ? pattern.test(origin)
-        : pattern === origin
-    )) {
-      callback(null, true);
-    } else {
-      console.log('Blocked origin:', origin);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: [
+    'https://think-tree-git-main-vostsoldiers-projects.vercel.app',
+    'https://think-tree.vercel.app',
+    'http://localhost:3000'
+  ],
   credentials: true,
-  optionsSuccessStatus: 200,
+  optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
