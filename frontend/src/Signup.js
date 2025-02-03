@@ -15,8 +15,13 @@ function Signup({ onLogin }) {
     e.preventDefault();
     try {
       const response = await api.post('/api/users/signup', { username, password });
-      setMessage('Signup successful! You can now login.');
-      navigate('/');
+      setMessage('Signup successful!');
+      const loginResponse = await api.post('/api/users/login', { username, password });
+      localStorage.setItem('token', loginResponse.data.token);
+      localStorage.removeItem('isDemo'); 
+      onLogin(loginResponse.data.token);
+      
+      navigate('/members');
     } catch (error) {
       setMessage(error.response?.data?.message || 'Signup failed.');
     }

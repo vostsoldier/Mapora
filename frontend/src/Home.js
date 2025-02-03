@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom'; 
 import './Home.css';
 import api from './api/apiWrapper';
@@ -7,9 +7,17 @@ import FadeInSection from './components/FadeInSection';
 
 function Home({ onLogin }) {
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    localStorage.getItem('token') || localStorage.getItem('isDemo')
-  );
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    const token = localStorage.getItem('token');
+    const isDemo = localStorage.getItem('isDemo') === 'true';
+    return Boolean(token) || isDemo;
+  });
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const isDemo = localStorage.getItem('isDemo') === 'true';
+    setIsAuthenticated(Boolean(token) || isDemo);
+  }, []);
 
   const handleSignup = () => {
     navigate('/signup');
@@ -22,6 +30,12 @@ function Home({ onLogin }) {
   const handleDemo = () => {
     onLogin(null, true); 
     navigate('/app');
+  };
+
+  const handleDashboardClick = () => {
+    if (isAuthenticated) {
+      navigate('/members');
+    }
   };
 
   return (
@@ -49,6 +63,14 @@ function Home({ onLogin }) {
                 Login
               </button>
             </>
+          )}
+          {isAuthenticated && (
+            <button 
+              className="btn dashboard" 
+              onClick={handleDashboardClick}
+            >
+              Dashboard
+            </button>
           )}
           <button className="btn demo" onClick={() => handleDemo()}>
             Demo

@@ -17,8 +17,10 @@ function Login({ onLogin }) {
       const response = await api.post('/api/users/login', { username, password });
       const { token } = response.data;
       setMessage('Login successful!');
+      localStorage.setItem('token', token);
+      localStorage.removeItem('isDemo');
       onLogin(token);
-      navigate('/app');
+      navigate('/members');
     } catch (error) {
       setMessage(error.response?.data?.message || 'Login failed.');
     }

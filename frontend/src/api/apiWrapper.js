@@ -2,7 +2,7 @@ import axiosInstance from './axios';
 
 const apiWrapper = {
   get: (url, config = {}) => {
-    if (localStorage.getItem('isDemo') === 'true') {
+    if (localStorage.getItem('isDemo') === 'true' && !localStorage.getItem('token')) {
       console.log(`Demo mode: GET request to ${url} blocked.`);
       return Promise.reject(new Error('Demo mode: GET requests are disabled.'));
     }
@@ -12,8 +12,7 @@ const apiWrapper = {
     if (url === '/api/users/signup' || url === '/api/users/login') {
       return axiosInstance.post(url, data, config);
     }
-    
-    if (localStorage.getItem('isDemo') === 'true') {
+    if (localStorage.getItem('isDemo') === 'true' && !localStorage.getItem('token')) {
       console.log(`Demo mode: POST request to ${url} blocked.`);
       return Promise.reject(new Error('Demo mode: POST requests are disabled.'));
     }

@@ -355,3 +355,11 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
+.btn.dashboard {
+  background-color: #2563EB;
+  color: white;
+}
+
+.btn.dashboard:hover {
+  background-color: #1D4ED8;
+}

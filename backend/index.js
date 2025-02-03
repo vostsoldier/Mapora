@@ -19,6 +19,8 @@ const thinkTreeRoutes = require('./routes/thinkTree');
 app.use('/api/thinking-trees', thinkTreeRoutes);
 const usersRoutes = require('./routes/users');
 app.use('/api/users', usersRoutes);
+const canvasRoutes = require('./routes/canvas');
+app.use('/api/canvas', canvasRoutes);
 app.get('/', (req, res) => {
   res.send('Hello from the backend!');
 });

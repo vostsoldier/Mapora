@@ -18,7 +18,9 @@ import Signup from './Signup';
 import Login from './Login'; 
 import Features from './Features';
 import About from './About';
-import { Routes, Route, Link, useNavigate } from 'react-router-dom';
+import Members from './Members';
+import Canvas from './Canvas';
+import { Routes, Route, Link, useNavigate, Navigate } from 'react-router-dom';
 import api from './api/apiWrapper'; 
 import { motion, AnimatePresence } from 'framer-motion';
 import Toast from './components/Toast';
@@ -963,15 +965,36 @@ function App() {
       <AnimatePresence mode="wait">
         <Routes>
           <Route path="/" element={
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.6 }}
-            >
-              <Home onLogin={handleLogin} />
-            </motion.div>
+            authToken ? (
+              <Navigate to="/members" replace />
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.6 }}
+              >
+                <Home onLogin={handleLogin} />
+              </motion.div>
+            )
           } />
+          <Route 
+            path="/members" 
+            element={
+              authToken ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.6 }}
+                >
+                  <Members />
+                </motion.div>
+              ) : (
+                <Navigate to="/" replace />
+              )
+            } 
+          />
           <Route path="/signup" element={
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -1269,6 +1292,19 @@ function App() {
                     </div>
                   )}
                 </div>
+              </motion.div>
+            }
+          />
+          <Route 
+            path="/app/:canvasId" 
+            element={
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.6 }}
+              >
+                <Canvas />
               </motion.div>
             }
           />
