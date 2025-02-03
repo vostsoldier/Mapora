@@ -5,14 +5,24 @@ const app = express();
 const PORT = process.env.PORT || 5001; 
 require('dotenv').config();
 const corsOptions = {
-  origin: [
-    'https://think-tree-git-main-vostsoldiers-projects.vercel.app',
-    'https://think-tree.vercel.app',
-    'http://localhost:3000'
-  ],
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'https://think-tree-git-main-vostsoldiers-projects.vercel.app',
+      'https://think-tree.vercel.app',
+      'http://localhost:3000'
+    ];
+    
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS policy violation'));
+    }
+  },
   credentials: true,
-  optionsSuccessStatus: 200
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 };
+
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
