@@ -26,17 +26,25 @@ function Members() {
   };
 
   const handleCreateCanvas = async () => {
+    if (!newCanvasName.trim()) {
+      alert('Please enter a canvas name');
+      return;
+    }
+
     try {
       const response = await api.post('/api/canvas', {
         name: newCanvasName,
         description: newCanvasDescription
       });
       
-      setCanvases([...canvases, response.data]);
+      const newCanvas = response.data;
+      setCanvases([...canvases, newCanvas]);
       setIsCreating(false);
-      navigate(`/app/${response.data._id}`);
+      setNewCanvasName('');
+      setNewCanvasDescription('');
+      navigate(`/app/${newCanvas._id}`);
     } catch (error) {
-      console.error('Canvas creation error:', error);
+      console.error('Error creating canvas:', error);
       alert('Failed to create canvas');
     }
   };

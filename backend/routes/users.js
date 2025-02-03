@@ -26,34 +26,26 @@ router.post('/signup', async (req, res) => {
   }
 });
 router.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+
   try {
-    const { username, password } = req.body;
     const userResult = await db.query('SELECT * FROM users WHERE username = $1', [username]);
-    
     if (userResult.rows.length === 0) {
       return res.status(400).json({ message: 'Invalid username or password' });
     }
 
     const user = userResult.rows[0];
     const isMatch = await bcrypt.compare(password, user.password_hash);
-    
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid username or password' });
     }
+    const token = jwt.sign({ userId: user.id, username: user.username }, process.env.JWT_SECRET, {
+      expiresIn: '1h',
+    });
 
-    const token = jwt.sign(
-      { 
-        userId: user.id,
-        username: user.username
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-
-    console.log('Generated token:', token);
-    res.json({ token });
+    res.json({ message: 'Login successful', token });
   } catch (err) {
-    console.error('Login error:', err);
+    console.error('Error in login:', err);
     res.status(500).json({ message: 'Server error during login' });
   }
 });

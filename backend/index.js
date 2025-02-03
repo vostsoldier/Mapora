@@ -5,13 +5,10 @@ const app = express();
 const PORT = process.env.PORT || 5001; 
 require('dotenv').config();
 const corsOptions = {
-  origin: ['https://think-tree-git-main-vostsoldiers-projects.vercel.app', 
-          'https://think-tree.vercel.app', 
-          'http://localhost:3000'],
+  origin: ['https://think-tree-git-main-vostsoldiers-projects.vercel.app', 'https://think-tree.vercel.app', 'http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-  exposedHeaders: ['Authorization']
+  credentials: true
 };
 
 app.use(cors(corsOptions));
@@ -48,25 +45,11 @@ mongoose.connect(process.env.MONGO_URI, {
   useUnifiedTopology: true,
 })
 .then(() => {
-  console.log('✅ MongoDB connected successfully');
-  console.log('Connected to database:', mongoose.connection.db.databaseName);
+  console.log('MongoDB connected');
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
 })
 .catch(err => {
-  console.error('❌ MongoDB connection error:', err);
-});
-
-mongoose.connection.on('error', err => {
   console.error('MongoDB connection error:', err);
-});
-
-mongoose.connection.once('open', () => {
-  console.log('MongoDB connected - Database:', mongoose.connection.db.databaseName);
-});
-
-mongoose.connection.on('error', err => {
-  console.error('MongoDB runtime error:', err);
-});
-
-mongoose.connection.on('connected', () => {
-  console.log('MongoDB connected to:', mongoose.connection.host);
 });

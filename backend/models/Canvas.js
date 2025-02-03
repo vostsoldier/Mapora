@@ -2,33 +2,34 @@ const mongoose = require('mongoose');
 
 const CanvasSchema = new mongoose.Schema({
   userId: {
-    type: String, 
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true
   },
   name: {
     type: String,
     required: true
   },
-  description: String,
+  description: {
+    type: String,
+    default: ''
+  },
   nodes: [{
-    type: mongoose.Schema.Types.Mixed
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ThinkTreeNode'
   }],
   edges: [{
-    type: mongoose.Schema.Types.Mixed
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ThinkTreeEdge'
   }],
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  lastModified: {
+    type: Date,
+    default: Date.now
   }
-});
-
-CanvasSchema.pre('save', function(next) {
-  this.lastModified = Date.now();
-  next();
-});
-
-CanvasSchema.pre('find', function() {
-  console.log('Finding canvases with query:', this.getQuery());
 });
 
 module.exports = mongoose.model('Canvas', CanvasSchema);
