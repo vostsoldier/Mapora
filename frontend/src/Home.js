@@ -9,14 +9,12 @@ function Home({ onLogin }) {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     const token = localStorage.getItem('token');
-    const isDemo = localStorage.getItem('isDemo') === 'true';
-    return Boolean(token) || isDemo;
+    return Boolean(token);
   });
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const isDemo = localStorage.getItem('isDemo') === 'true';
-    setIsAuthenticated(Boolean(token) || isDemo);
+    setIsAuthenticated(Boolean(token));
   }, []);
 
   const handleSignup = () => {
@@ -25,11 +23,6 @@ function Home({ onLogin }) {
 
   const handleLogin = () => {
     navigate('/login');
-  };
-
-  const handleDemo = () => {
-    onLogin(null, true); 
-    navigate('/app');
   };
 
   const handleDashboardClick = () => {
@@ -56,10 +49,10 @@ function Home({ onLogin }) {
         <div className="button-group">
           {!isAuthenticated && (
             <>
-              <button className="btn signup" onClick={() => navigate('/signup')}>
+              <button className="btn signup" onClick={handleSignup}>
                 Signup
               </button>
-              <button className="btn login" onClick={() => navigate('/login')}>
+              <button className="btn login" onClick={handleLogin}>
                 Login
               </button>
             </>
@@ -72,9 +65,6 @@ function Home({ onLogin }) {
               Dashboard
             </button>
           )}
-          <button className="btn demo" onClick={() => handleDemo()}>
-            Demo
-          </button>
         </div>
       </header>
       <main className="main-content">

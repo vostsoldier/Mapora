@@ -32,7 +32,7 @@ const COLOR_PRESETS = [
   { name: 'Purple', value: '#8B5CF6' },
   { name: 'Gray', value: '#9CA3AF' }, 
 ];
-const Box = ({ data, id, isDemo, setNodes, nodes }) => { 
+const Box = ({ data, id, setNodes, nodes }) => { 
   const [dimensions, setDimensions] = useState({
     width: data.width || 150,
     height: data.height || 100
@@ -82,10 +82,6 @@ const Box = ({ data, id, isDemo, setNodes, nodes }) => {
       });
 
       setNodes(updatedNodes);
-
-      if (isDemo) {
-        localStorage.setItem('demo_nodes', JSON.stringify(updatedNodes));
-      }
     };
 
     const handlePointerUp = () => {
@@ -198,11 +194,8 @@ function App() {
   const [selectedEdge, setSelectedEdge] = useState(null);
   const [connectSource, setConnectSource] = useState(null);
   const [authToken, setAuthToken] = useState(localStorage.getItem('token') || '');
-  const [isDemo, setIsDemo] = useState(localStorage.getItem('isDemo') === 'true'); 
   const [currentView, setCurrentView] = useState(() => {
-    if (localStorage.getItem('isDemo') === 'true') return 'app';
-    if (localStorage.getItem('token')) return 'app';
-    return 'home';
+    return localStorage.getItem('token') ? 'app' : 'home';
   });
   const [toasts, setToasts] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -212,7 +205,6 @@ function App() {
     box: (props) => (
       <Box 
         {...props} 
-        isDemo={isDemo} 
         setNodes={setNodes} 
         nodes={nodes} 
       />
@@ -233,7 +225,7 @@ function App() {
     if (currentView === 'app') {
       fetchTree();
     }
-  }, [currentView, isDemo]);
+  }, [currentView]);
 
   useEffect(() => {
     const handleClick = () => {
@@ -253,7 +245,7 @@ function App() {
   useEffect(() => {
     if (currentView !== 'app') return;
 
-    const handleHandleClick = (event) => {
+    const handleHandleClick = async (event) => {
       event.stopPropagation(); 
 
       const handleElement = event.target.closest('.react-flow__handle');
@@ -281,8 +273,8 @@ function App() {
 
         setEdges((eds) => addEdge(newEdge, eds));
 
-        if (!isDemo) {
-          axios
+        try {
+          await axios
             .put(`/api/thinking-trees/${newEdge.target}/parent`, {
               parentId: newEdge.source,
             }, {
@@ -297,6 +289,9 @@ function App() {
               console.error('Error updating parent node:', error);
               alert('Failed to update parent node.');
             });
+        } catch (error) {
+          console.error('Error updating parent node:', error);
+          alert('Failed to update parent node.');
         }
 
         setConnectSource(null); 
@@ -309,84 +304,60 @@ function App() {
     return () => {
       window.removeEventListener('click', handleHandleClick);
     };
-  }, [connectSource, currentView, authToken, isDemo]);
+  }, [connectSource, currentView, authToken]);
 
   const fetchTree = async () => {
-    if (isDemo) {
-      const storedNodes = JSON.parse(localStorage.getItem('demo_nodes')) || [];
-      const storedEdges = JSON.parse(localStorage.getItem('demo_edges')) || [];
-      
-      console.log('Loading demo data:', { storedNodes, storedEdges });
-      
-      setNodes(storedNodes.map(node => ({
-        ...node,
-        className: node.hasLabel ? 'node-with-label' : '',
-        style: node.style || {},
-        data: {
-          ...node.data,
-          labelText: node.data.labelText || ''
-        }
-      })));
-      
-      setEdges(storedEdges.map((edge) => ({
-        ...edge,
-        style: {
-          ...edge.style,
-          animationDirection: edge.reverseAnimated ? 'reverse' : 'normal',
+    try {
+      const response = await axios.get('/api/thinking-trees/full-tree', {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
         },
-      })));
-    } else {
-      try {
-        const response = await axios.get('/api/thinking-trees/full-tree', {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
+      });
+      // Process response as before
+      const { tree, edges: fetchedEdges } = response.data;
+      const flowNodes = [];
+      const flowEdges = [];
+
+      const processNode = (node) => {
+        flowNodes.push({
+          id: node._id,
+          data: { label: node.title },
+          position: node.position || { x: Math.random() * 250, y: Math.random() * 250 },
+          type: node.type || 'default',
         });
-        const { tree, edges: fetchedEdges } = response.data;
-        const flowNodes = [];
-        const flowEdges = [];
+      };
 
-        const processNode = (node) => {
-          flowNodes.push({
-            id: node._id,
-            data: { label: node.title },
-            position: node.position || { x: Math.random() * 250, y: Math.random() * 250 },
-            type: node.type || 'default',
-          });
-        };
-
-        const traverseTree = (nodes) => {
-          nodes.forEach((node) => {
-            processNode(node);
-            traverseTree(node.children);
-          });
-        };
-
-        traverseTree(tree);
-        fetchedEdges.forEach((edge) => {
-          flowEdges.push({
-            id: edge._id, 
-            source: edge.source,
-            target: edge.target,
-            animated: edge.animated,
-            reverseAnimated: edge.reverseAnimated,
-            style: { animationDirection: edge.reverseAnimated ? 'reverse' : 'normal' },
-          });
+      const traverseTree = (nodes) => {
+        nodes.forEach((node) => {
+          processNode(node);
+          traverseTree(node.children);
         });
+      };
 
-        if (flowNodes.length === 0) {
-          addCentralNode(flowNodes, flowEdges);
-        } else {
-          setNodes(flowNodes);
-          setEdges(flowEdges);
-        }
-      } catch (error) {
-        console.error('Error fetching tree:', error);
-        if (error.response && error.response.status === 401) {
-          setAuthToken('');
-          localStorage.removeItem('token');
-          setCurrentView('home');
-        }
+      traverseTree(tree);
+      fetchedEdges.forEach((edge) => {
+        flowEdges.push({
+          id: edge._id, 
+          source: edge.source,
+          target: edge.target,
+          animated: edge.animated,
+          reverseAnimated: edge.reverseAnimated,
+          style: { animationDirection: edge.reverseAnimated ? 'reverse' : 'normal' },
+        });
+      });
+
+      if (flowNodes.length === 0) {
+        addCentralNode(flowNodes, flowEdges);
+      } else {
+        setNodes(flowNodes);
+        setEdges(flowEdges);
+      }
+    } catch (error) {
+      console.error('Error fetching tree:', error);
+      if (error.response && error.response.status === 401) {
+        setAuthToken('');
+        localStorage.removeItem('token');
+        setCurrentView('home');
       }
     }
   };
@@ -419,25 +390,31 @@ function App() {
 
   const onConnectHandler = useCallback(
     async (params) => {
-      if (isDemo) {
-        const newEdge = {
-          id: `demo-edge-${Date.now()}`,
-          source: params.source,
-          target: params.target,
-          animated: true,
-          reverseAnimated: false,
-          style: { animationDirection: 'normal' },
-        };
-        setEdges((eds) => {
-          const updatedEdges = addEdge(newEdge, eds);
-          localStorage.setItem('demo_edges', JSON.stringify(updatedEdges));
-          return updatedEdges;
+      const newEdge = {
+        id: `${params.source}-${params.target}-${Date.now()}`,
+        source: params.source,
+        target: params.target,
+        animated: true,
+        reverseAnimated: false,
+        style: { animationDirection: 'normal' },
+      };
+      setEdges((eds) => addEdge(newEdge, eds));
+
+      try {
+        await axios.put(`/api/thinking-trees/${newEdge.target}/parent`, {
+          parentId: newEdge.source,
+        }, {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
         });
-        localStorage.setItem('demo_nodes', JSON.stringify(nodes));
-      } else {
+        console.log(`Updated parent of node ${newEdge.target} to ${newEdge.source}`);
+      } catch (error) {
+        console.error('Error updating parent node:', error);
+        alert('Failed to update parent node.');
       }
     },
-    [authToken, isDemo, nodes]
+    [authToken]
   );
 
   const onElementsRemoveHandler = (elementsToRemove) => {
@@ -468,57 +445,39 @@ function App() {
   const saveTree = useCallback(async () => {
     setIsSaving(true);
     
-    if (isDemo) {
-      const nodesToSave = nodes.map(node => ({
-        ...node,
-        hasLabel: node.hasLabel,
-        className: node.className,
-        style: node.style,
-        data: {
-          ...node.data,
-          labelText: node.data.labelText || ''
-        }
+    try {
+      const nodesData = nodes.map((node) => ({
+        _id: node.id,
+        title: node.data.label,
+        content: '',
+        parents: edges.filter((edge) => edge.target === node.id).map((edge) => edge.source),
+        position: node.position,
+        type: node.type || 'default',
       }));
-      
-      localStorage.setItem('demo_nodes', JSON.stringify(nodesToSave));
-      localStorage.setItem('demo_edges', JSON.stringify(edges));
-      await new Promise(resolve => setTimeout(resolve, 2000));
-    } else {
-      try {
-        const nodesData = nodes.map((node) => ({
-          _id: node.id,
-          title: node.data.label,
-          content: '',
-          parents: edges.filter((edge) => edge.target === node.id).map((edge) => edge.source),
-          position: node.position,
-          type: node.type || 'default',
-        }));
-        const edgesData = edges.map((edge) => ({
-          _id: edge.id,
-          source: edge.source,
-          target: edge.target,
-          animated: edge.animated,
-          reverseAnimated: edge.reverseAnimated,
-        }));
+      const edgesData = edges.map((edge) => ({
+        _id: edge.id,
+        source: edge.source,
+        target: edge.target,
+        animated: edge.animated,
+        reverseAnimated: edge.reverseAnimated,
+      }));
 
-        await axios.put('/api/thinking-trees/bulk-update', {
-          nodes: nodesData,
-          edges: edgesData, 
-        }, {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        });
-        console.log('Tree saved successfully!');
-      } catch (error) {
-        console.error('Error saving tree:', error);
-        alert('Failed to save tree.');
-      }
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await axios.put('/api/thinking-trees/bulk-update', {
+        nodes: nodesData,
+        edges: edgesData, 
+      }, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+      console.log('Tree saved successfully!');
+    } catch (error) {
+      console.error('Error saving tree:', error);
+      alert('Failed to save tree.');
     }
     
     setIsSaving(false);
-  }, [nodes, edges, authToken, isDemo]);
+  }, [nodes, edges, authToken]);
 
   const debouncedSaveTree = useCallback(
     debounce(async () => {
@@ -541,7 +500,7 @@ function App() {
       return;
     }
 
-    const newNodeId = isDemo ? `demo-node-${Date.now()}` : `temp-id-${Date.now()}`;
+    const newNodeId = `temp-id-${Date.now()}`;
     const newNode = {
       id: newNodeId,
       data: { label: nodeTitle },
@@ -551,41 +510,36 @@ function App() {
 
     setNodes((nds) => [...nds, newNode]);
 
-    if (!isDemo) {
-      try {
-        const response = await axios.post('/api/thinking-trees', {
-          title: nodeTitle,
-          content: '',
-          parentIds: [],
-          position: newNode.position,
-          type: 'default',
-        }, {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        });
-        const createdNode = response.data;
-        setNodes((nds) => nds.map(node => node.id === newNode.id ? {
-          ...node,
-          id: createdNode._id,
-        } : node));
-        setNodeTitle('');
-        setIsAdding(false);
-        addToast('Node added successfully!', 'success'); 
-      } catch (error) {
-        console.error('Error adding node:', error);
-        alert('Failed to add node.');
-        addToast('Failed to add node.', 'error'); 
-      }
+    try {
+      const response = await axios.post('/api/thinking-trees', {
+        title: nodeTitle,
+        content: '',
+        parentIds: [],
+        position: newNode.position,
+        type: 'default',
+      }, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+      const createdNode = response.data;
+      setNodes((nds) => nds.map(node => node.id === newNode.id ? {
+        ...node,
+        id: createdNode._id,
+      } : node));
+      setNodeTitle('');
+      setIsAdding(false);
+      addToast('Node added successfully!', 'success'); 
+    } catch (error) {
+      console.error('Error adding node:', error);
+      alert('Failed to add node.');
+      addToast('Failed to add node.', 'error'); 
     }
-
-    setNodeTitle('');
-    setIsAdding(false);
   };
 
   const handleAddBox = () => {
     const newBox = {
-      id: isDemo ? `demo-box-${Date.now()}` : `temp-box-${Date.now()}`,
+      id: `temp-box-${Date.now()}`,
       type: 'box',
       data: { 
         label: 'New Box',
@@ -595,11 +549,6 @@ function App() {
     };
 
     setNodes((nds) => [...nds, newBox]);
-    
-    if (isDemo) {
-      const updatedNodes = [...nodes, newBox];
-      localStorage.setItem('demo_nodes', JSON.stringify(updatedNodes));
-    }
   };
 
   const onNodeContextMenu = useCallback((event, node) => {
@@ -615,18 +564,21 @@ function App() {
 
   const handleDelete = async () => {
     if (selectedNode) {
-      if (isDemo) {
-        const updatedNodes = nodes.filter((node) => node.id !== selectedNode.id);
-        setNodes(updatedNodes);
-        const updatedEdges = edges.filter(
-          (edge) => edge.source !== selectedNode.id && edge.target !== selectedNode.id
-        );
-        setEdges(updatedEdges);
-        localStorage.setItem('demo_nodes', JSON.stringify(updatedNodes));
-        localStorage.setItem('demo_edges', JSON.stringify(updatedEdges));
-        
+      const updatedNodes = nodes.filter((node) => node.id !== selectedNode.id);
+      setNodes(updatedNodes);
+      const updatedEdges = edges.filter(
+        (edge) => edge.source !== selectedNode.id && edge.target !== selectedNode.id
+      );
+      setEdges(updatedEdges);
+      try {
+        await axios.delete(`/api/thinking-trees/${selectedNode.id}`, {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        });
         addToast('Node deleted successfully.', 'success');
-      } else {
+      } catch (error) {
+        console.error('Error deleting node:', error);
       }
       setContextMenu(null);
       setSelectedNode(null);
@@ -637,15 +589,6 @@ function App() {
     async (event, node) => {
       const { id, position } = node;
       console.log(`Node ${id} moved to`, position);
-
-      if (isDemo) {
-        const updatedNodes = nodes.map((n) =>
-          n.id === id ? { ...n, position } : n
-        );
-        setNodes(updatedNodes);
-        saveTree(); 
-        return;
-      }
 
       try {
         await axios.put(`/api/thinking-trees/${id}/position`, {
@@ -662,7 +605,7 @@ function App() {
         alert('Failed to update node position.');
       }
     },
-    [authToken, isDemo, nodes, saveTree]
+    [authToken]
   );
 
   const handleEdit = () => {
@@ -676,21 +619,6 @@ function App() {
   const saveEditedTitle = async () => {
     if (!editedTitle.trim()) {
       alert('Node title cannot be empty.');
-      return;
-    }
-
-    if (isDemo) {
-      setNodes((nds) =>
-        nds.map((node) =>
-          node.id === selectedNode.id
-            ? { ...node, data: { ...node.data, label: editedTitle } }
-            : node
-        )
-      );
-      setIsEditing(false);
-      setSelectedNode(null);
-      saveTree();
-      addToast('Node name updated successfully!', 'success'); 
       return;
     }
 
@@ -741,23 +669,18 @@ function App() {
 
   const handleEdgeDelete = async () => {
     if (selectedEdge) {
-      if (isDemo) {
+      try {
+        await axios.put(`/api/thinking-trees/edges/${selectedEdge.id}/remove-parent`, {
+          parentId: selectedEdge.source,
+        }, {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        });
         setEdges((eds) => eds.filter((e) => e.id !== selectedEdge.id));
-        localStorage.setItem('demo_edges', JSON.stringify(edges.filter((e) => e.id !== selectedEdge.id)));
-      } else {
-        try {
-          await axios.put(`/api/thinking-trees/edges/${selectedEdge.id}/remove-parent`, {
-            parentId: selectedEdge.source,
-          }, {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          });
-          setEdges((eds) => eds.filter((e) => e.id !== selectedEdge.id));
-        } catch (error) {
-          console.error('Error deleting edge:', error);
-          alert('Failed to delete edge.');
-        }
+      } catch (error) {
+        console.error('Error deleting edge:', error);
+        alert('Failed to delete edge.');
       }
       setEdgeContextMenu(null);
       setSelectedEdge(null);
@@ -766,51 +689,34 @@ function App() {
 
   const handleEdgeReverse = async () => {
     if (selectedEdge) {
-      if (isDemo) {
-        const updatedEdges = edges.map((e) =>
-          e.id === selectedEdge.id
-            ? {
-                ...e,
-                reverseAnimated: !e.reverseAnimated,
-                style: {
-                  ...e.style,
-                  animationDirection: !e.reverseAnimated ? 'reverse' : 'normal',
-                },
-              }
-            : e
-        );
-        setEdges(updatedEdges);
-        localStorage.setItem('demo_edges', JSON.stringify(updatedEdges));
-      } else {
-        try {
-          const updatedReverseAnimated = !selectedEdge.reverseAnimated;
-          const response = await axios.put(`/api/thinking-trees/edges/${selectedEdge.id}/reverse-animation`, {
-            reverseAnimated: updatedReverseAnimated,
-          }, {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          });
-          const updatedEdge = response.data;
+      try {
+        const updatedReverseAnimated = !selectedEdge.reverseAnimated;
+        const response = await axios.put(`/api/thinking-trees/edges/${selectedEdge.id}/reverse-animation`, {
+          reverseAnimated: updatedReverseAnimated,
+        }, {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        });
+        const updatedEdge = response.data;
 
-          setEdges((eds) =>
-            eds.map((e) =>
-              e.id === updatedEdge.id
-                ? {
-                    ...e,
-                    reverseAnimated: updatedEdge.reverseAnimated,
-                    style: {
-                      ...e.style,
-                      animationDirection: updatedEdge.reverseAnimated ? 'reverse' : 'normal',
-                    },
-                  }
-                : e
-            )
-          );
-        } catch (error) {
-          console.error('Error reversing edge animation:', error);
-          alert('Failed to reverse edge animation.');
-        }
+        setEdges((eds) =>
+          eds.map((e) =>
+            e.id === updatedEdge.id
+              ? {
+                  ...e,
+                  reverseAnimated: updatedEdge.reverseAnimated,
+                  style: {
+                    ...e.style,
+                    animationDirection: updatedEdge.reverseAnimated ? 'reverse' : 'normal',
+                  },
+                }
+              : e
+          )
+        );
+      } catch (error) {
+        console.error('Error reversing edge animation:', error);
+        alert('Failed to reverse edge animation.');
       }
       setEdgeContextMenu(null);
       setSelectedEdge(null);
@@ -839,10 +745,6 @@ function App() {
       );
       setEdgeContextMenu(null);
       setSelectedEdge(null);
-      
-      if (isDemo) {
-        localStorage.setItem('demo_edges', JSON.stringify(edges));
-      }
     }
   };
   const handleNormalFlow = () => {
@@ -867,59 +769,23 @@ function App() {
       );
       setEdgeContextMenu(null);
       setSelectedEdge(null);
-      
-      if (isDemo) {
-        localStorage.setItem('demo_edges', JSON.stringify(edges));
-      }
     }
   };
 
   const handleSignup = async () => {
   };
 
-  const handleLogin = (token, demo = false) => {
-    if (demo) {
-      setIsLoading(true);
-      setAuthToken(token);
-      setIsDemo(true);
-      localStorage.setItem('isDemo', 'true');
-      setTimeout(() => {
-        let storedNodes = JSON.parse(localStorage.getItem('demo_nodes'));
-        let storedEdges = JSON.parse(localStorage.getItem('demo_edges'));
-
-        if (!storedNodes || storedNodes.length === 0) {
-          const centralNode = {
-            id: `demo-node-1`,
-            data: { label: 'Central Node' },
-            position: { x: 250, y: 250 },
-            type: 'default',
-          };
-          storedNodes = [centralNode];
-          localStorage.setItem('demo_nodes', JSON.stringify(storedNodes));
-        }
-
-        if (!storedEdges) {
-          storedEdges = [];
-          localStorage.setItem('demo_edges', JSON.stringify(storedEdges));
-        }
-
-        setNodes(storedNodes);
-        setEdges(storedEdges);
-        document.querySelector('.loading-screen').classList.add('fade-out');
-        setTimeout(() => {
-          setIsLoading(false);
-          setCurrentView('app');
-        }, 1000);
-        
-      }, 3000);
-    }
+  const handleLogin = (token) => {
+    setAuthToken(token);
+    localStorage.setItem('token', token);
+    navigate('/members'); 
   };
 
   const handleLogout = () => {
     setAuthToken('');
-    setIsDemo(false);
     localStorage.removeItem('token');
-    localStorage.removeItem('isDemo'); 
+    localStorage.removeItem('demo_nodes');
+    localStorage.removeItem('demo_edges');
     setCurrentView('home');
   };
 
@@ -941,43 +807,30 @@ function App() {
     
     setNodes(updatedNodes);
     
-    if (isDemo) {
-      const nodesToSave = updatedNodes.map(node => ({
-        ...node,
-        hasLabel: node.hasLabel,
-        className: node.className,
-        style: node.style, 
-      }));
-      localStorage.setItem('demo_nodes', JSON.stringify(nodesToSave));
-    }
-    
     setContextMenu(null);
-  };
-
-  const handleDemoSignup = () => {
-    setIsDemo(false);
-    localStorage.removeItem('isDemo');
-    navigate('/signup'); 
   };
 
   return (
     <ReactFlowProvider>
       <AnimatePresence mode="wait">
         <Routes>
-          <Route path="/" element={
-            authToken ? (
-              <Navigate to="/members" replace />
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.6 }}
-              >
-                <Home onLogin={handleLogin} />
-              </motion.div>
-            )
-          } />
+          <Route 
+            path="/" 
+            element={
+              (authToken) ? (
+                <Navigate to="/members" replace />
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.6 }}
+                >
+                  <Home onLogin={handleLogin} />
+                </motion.div>
+              )
+            } 
+          />
           <Route 
             path="/members" 
             element={
@@ -1033,20 +886,12 @@ function App() {
                         <button className="btn" onClick={() => setIsAdding(true)}>
                           Add Node
                         </button>
-                        {!isDemo && (
-                          <button className="btn" onClick={saveTree}>
-                            Save Tree
-                          </button>
-                        )}
-                        {isDemo && !authToken ? (
-                          <button className="btn signup" onClick={handleDemoSignup}>
-                            Signup
-                          </button>
-                        ) : (
-                          <button className="btn cancel" onClick={handleLogout}>
-                            Logout
-                          </button>
-                        )}
+                        <button className="btn" onClick={saveTree}>
+                          Save Tree
+                        </button>
+                        <button className="btn cancel" onClick={handleLogout}>
+                          Logout
+                        </button>
                       </div>
                     </header>
                     {isAdding && (
@@ -1113,9 +958,6 @@ function App() {
                                         background: color.value,
                                       },
                                     });
-                                    if (isDemo) {
-                                      localStorage.setItem('demo_nodes', JSON.stringify(updatedNodes));
-                                    }
                                   }}
                                 >
                                   <span className="color-name">{color.name}</span>
