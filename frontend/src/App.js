@@ -784,9 +784,7 @@ function App() {
   const handleLogout = () => {
     setAuthToken('');
     localStorage.removeItem('token');
-    localStorage.removeItem('demo_nodes');
-    localStorage.removeItem('demo_edges');
-    setCurrentView('home');
+    navigate('/');
   };
 
   const handleAddLabel = (nodeId) => {

@@ -13,17 +13,17 @@ function Members() {
   const [newCanvasDescription, setNewCanvasDescription] = useState('');
 
   useEffect(() => {
-    fetchCanvases();
+    loadCanvases();
   }, []);
 
-  const fetchCanvases = async () => {
+  async function loadCanvases() {
     try {
       const response = await api.get('/api/canvas');
       setCanvases(response.data);
-    } catch (error) {
-      console.error('Error fetching canvases:', error);
+    } catch (err) {
+      console.error('Error loading canvases:', err);
     }
-  };
+  }
 
   const handleCreateCanvas = async () => {
     if (!newCanvasName.trim()) {
@@ -56,7 +56,8 @@ function Members() {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('isDemo');
-    navigate('/');
+    navigate('/', { replace: true });
+    window.location.reload();
   };
 
   return (
@@ -108,7 +109,7 @@ function Members() {
             <div className="projects-grid">
               <div 
                 className="project-card add-new" 
-                onClick={() => setIsCreating(true)} // Change from navigate('/app')
+                onClick={() => setIsCreating(true)} 
               >
                 <div className="project-card-content">
                   <span className="add-icon">+</span>
@@ -156,14 +157,12 @@ function Members() {
         {activeSection === 'profile' && (
           <section className="profile-section">
             <h1>Profile</h1>
-            {/* Profile content */}
           </section>
         )}
 
         {activeSection === 'settings' && (
           <section className="settings-section">
             <h1>Settings</h1>
-            {/* Settings content */}
           </section>
         )}
       </main>
