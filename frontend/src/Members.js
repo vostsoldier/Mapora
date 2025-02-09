@@ -3,8 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import './Home.css';
 import api from './api/apiWrapper';
-
-function Members() {
+function Members({ addToast }) { 
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('projects');
   const [canvases, setCanvases] = useState([]);
@@ -15,19 +14,19 @@ function Members() {
   useEffect(() => {
     loadCanvases();
   }, []);
-
-  async function loadCanvases() {
-    try {
-      const response = await api.get('/api/canvas');
-      setCanvases(response.data);
-    } catch (err) {
-      console.error('Error loading canvases:', err);
-    }
-  }
-
+  const loadCanvases = async () => {
+    api.get('/api/canvas')
+      .then(response => {
+        setCanvases(response.data);
+      })
+      .catch(error => {
+        console.error('Error loading canvases:', error);
+        addToast?.('Failed to load canvases', 'error');
+      });
+  };
   const handleCreateCanvas = async () => {
     if (!newCanvasName.trim()) {
-      alert('Please enter a canvas name');
+      addToast?.('Please enter a canvas name', 'error');
       return;
     }
 
@@ -35,6 +34,10 @@ function Members() {
       const response = await api.post('/api/canvas', {
         name: newCanvasName,
         description: newCanvasDescription
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
       });
       
       const newCanvas = response.data;
@@ -42,10 +45,11 @@ function Members() {
       setIsCreating(false);
       setNewCanvasName('');
       setNewCanvasDescription('');
+      addToast?.('Canvas created successfully', 'success');
       navigate(`/app/${newCanvas._id}`);
     } catch (error) {
       console.error('Error creating canvas:', error);
-      alert('Failed to create canvas');
+      addToast?.('Failed to create canvas', 'error');
     }
   };
 

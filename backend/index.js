@@ -5,7 +5,13 @@ const app = express();
 const PORT = process.env.PORT || 5001; 
 require('dotenv').config();
 const corsOptions = {
-  origin: ['https://think-tree-git-main-vostsoldiers-projects.vercel.app', 'https://think-tree.vercel.app', 'http://localhost:3000', 'https://localhost:3000/members'],
+  origin: [
+    'https://think-tree-git-main-vostsoldiers-projects.vercel.app',
+    'https://think-tree.vercel.app',
+    'http://localhost:3000',
+    'https://localhost:3000/members',
+    'https://think-tree-production.up.railway.app'
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true

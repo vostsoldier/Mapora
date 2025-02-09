@@ -2,8 +2,7 @@ const mongoose = require('mongoose');
 
 const CanvasSchema = new mongoose.Schema({
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    type: String,
     required: true
   },
   name: {
@@ -23,10 +22,6 @@ const CanvasSchema = new mongoose.Schema({
     ref: 'ThinkTreeEdge'
   }],
   createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  lastModified: {
     type: Date,
     default: Date.now
   }

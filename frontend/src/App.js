@@ -839,7 +839,7 @@ function App() {
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.6 }}
                 >
-                  <Members />
+                  <Members addToast={addToast} />
                 </motion.div>
               ) : (
                 <Navigate to="/" replace />

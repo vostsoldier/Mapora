@@ -2,32 +2,40 @@ const express = require('express');
 const router = express.Router();
 const authenticateToken = require('../middleware/auth');
 const Canvas = require('../models/Canvas');
+
 router.post('/', authenticateToken, async (req, res) => {
   try {
     const { name, description } = req.body;
     if (!name) {
-      return res.status(400).json({ message: 'Canvas name is required.' });
+      return res.status(400).json({ message: 'Canvas name is required' });
     }
+
     const canvas = new Canvas({
       userId: req.user.userId,
       name,
-      description
+      description: description || '',
+      nodes: [],
+      edges: []
     });
-    await canvas.save();
-    res.status(201).json(canvas);
-  } catch (err) {
-    console.error('Error creating canvas:', err);
-    res.status(500).json({ message: err.message });
+
+    const savedCanvas = await canvas.save();
+    res.status(201).json(savedCanvas);
+  } catch (error) {
+    console.error('Error creating canvas:', error);
+    res.status(500).json({ 
+      message: 'Error creating canvas',
+      error: error.message 
+    });
   }
 });
-router.get('/', authenticateToken, async (req, res) => {
-  try {
-    const canvases = await Canvas.find({ userId: req.user.userId }).lean();
-    res.json(canvases);
 
-  } catch (err) {
-    console.error('Error fetching canvases:', err);
-    res.status(500).json({ message: 'Failed to fetch canvases' });
+router.get('/', async (req, res) => {
+  try {
+    const canvases = await Canvas.find();
+    res.json(canvases);
+  } catch (error) {
+    console.error("Error fetching canvases:", error);
+    res.status(500).json({ message: "Internal server error fetching canvases" });
   }
 });
 
