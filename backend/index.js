@@ -7,7 +7,11 @@ require('dotenv').config();
 const corsOptions = {
   origin: [
     'https://think-tree-git-main-vostsoldiers-projects.vercel.app',
+<<<<<<< Updated upstream
     'https://think-tree.vercel.app',
+=======
+    'https://mapora.vercel.app',
+>>>>>>> Stashed changes
     'http://localhost:3000',
     'https://localhost:3000/members',
     'https://think-tree-production.up.railway.app'

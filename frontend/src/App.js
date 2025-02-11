@@ -426,7 +426,7 @@ function App() {
 
     nodesToRemove.forEach(async (node) => {
       try {
-        await axios.delete(`/api/thinking-trees/${node.id}`, {
+        await axios.delete(`/thinking-trees/${node.id}`, {
           headers: {
             Authorization: `Bearer ${authToken}`,
           },

@@ -3,6 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import './Home.css';
 import api from './api/apiWrapper';
+<<<<<<< Updated upstream
+=======
+import axios from 'axios';
+
+>>>>>>> Stashed changes
 function Members({ addToast }) { 
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('projects');
@@ -14,6 +19,7 @@ function Members({ addToast }) {
   useEffect(() => {
     loadCanvases();
   }, []);
+<<<<<<< Updated upstream
   const loadCanvases = async () => {
     api.get('/api/canvas')
       .then(response => {
@@ -27,10 +33,27 @@ function Members({ addToast }) {
   const handleCreateCanvas = async () => {
     if (!newCanvasName.trim()) {
       addToast?.('Please enter a canvas name', 'error');
+=======
+
+  const loadCanvases = async () => {
+    try {
+      const response = await api.get('/canvas');
+      setCanvases(response.data);
+    } catch (error) {
+      console.error('Error loading canvases:', error);
+      addToast?.('Failed to load canvases', 'error');
+    }
+  };
+
+  const handleCreateCanvas = async () => {
+    if (!newCanvasName.trim()) {
+      alert('Canvas name cannot be empty.');
+>>>>>>> Stashed changes
       return;
     }
 
     try {
+<<<<<<< Updated upstream
       const response = await api.post('/api/canvas', {
         name: newCanvasName,
         description: newCanvasDescription
@@ -47,6 +70,17 @@ function Members({ addToast }) {
       setNewCanvasDescription('');
       addToast?.('Canvas created successfully', 'success');
       navigate(`/app/${newCanvas._id}`);
+=======
+      const response = await api.post('/canvas', {
+        name: newCanvasName,
+        description: newCanvasDescription
+      });
+      navigate(`/app/${response.data._id}`);
+      addToast?.('Canvas created successfully!', 'success');
+      setNewCanvasName('');
+      setNewCanvasDescription('');
+      setIsCreating(false);
+>>>>>>> Stashed changes
     } catch (error) {
       console.error('Error creating canvas:', error);
       addToast?.('Failed to create canvas', 'error');

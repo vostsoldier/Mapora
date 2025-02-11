@@ -2,8 +2,18 @@ import axios from 'axios';
 
 const token = localStorage.getItem('token');
 
+<<<<<<< Updated upstream
 const api = axios.create({
   baseURL: 'https://think-tree-production.up.railway.app/api',
+=======
+const baseURL =
+  process.env.NODE_ENV === 'production'
+    ? 'https://think-tree-production.up.railway.app/api'
+    : 'http://localhost:5001/api';
+
+const api = axios.create({
+  baseURL,
+>>>>>>> Stashed changes
   headers: {
     'Content-Type': 'application/json',
     ...(token && { Authorization: `Bearer ${token}` })
@@ -49,6 +59,9 @@ const apiWrapper = {
     }
     return api.delete(url, config);
   },
+  getCanvas: (canvasId) => {
+    return api.get(`/canvas/${canvasId}`);
+  }
 };
 
 export default apiWrapper;

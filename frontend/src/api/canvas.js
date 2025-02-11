@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+<<<<<<< Updated upstream
 const Canvas = require('../models/Canvas'); 
 
 router.post('/', async (req, res) => {
@@ -20,6 +21,42 @@ router.get('/', async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+=======
+const Canvas = require('../models/Canvas');
+const authenticateToken = require('../middleware/auth');
+router.get('/', async (req, res) => {
+  try {
+    const canvases = await Canvas.find().lean();
+    res.json(canvases);
+  } catch (error) {
+    console.error('Error fetching canvases:', error);
+    res.status(500).json({ message: 'Error fetching canvases' });
+  }
+});
+router.post('/', authenticateToken, async (req, res) => {
+  try {
+    const { name, description } = req.body;
+    if (!name) {
+      return res.status(400).json({ message: 'Canvas name is required' });
+    }
+
+    const canvas = new Canvas({
+      userId: req.user.userId,
+      name,
+      description: description || '',
+      nodes: [],
+      edges: []
+    });
+
+    const savedCanvas = await canvas.save();
+    res.status(201).json(savedCanvas);
+  } catch (error) {
+    console.error('Error creating canvas:', error);
+    res.status(500).json({ message: 'Error creating canvas', error: error.message });
+  }
+});
+
+>>>>>>> Stashed changes
 router.get('/:id', async (req, res) => {
   try {
     const canvas = await Canvas.findById(req.params.id);
