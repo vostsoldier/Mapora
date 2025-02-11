@@ -2,10 +2,6 @@ import axios from 'axios';
 
 const token = localStorage.getItem('token');
 
-<<<<<<< Updated upstream
-const api = axios.create({
-  baseURL: 'https://think-tree-production.up.railway.app/api',
-=======
 const baseURL =
   process.env.NODE_ENV === 'production'
     ? 'https://think-tree-production.up.railway.app/api'
@@ -13,7 +9,6 @@ const baseURL =
 
 const api = axios.create({
   baseURL,
->>>>>>> Stashed changes
   headers: {
     'Content-Type': 'application/json',
     ...(token && { Authorization: `Bearer ${token}` })

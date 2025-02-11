@@ -3,11 +3,7 @@ import axios from 'axios';
 const baseURL = process.env.REACT_APP_API_URL.trim(); 
 
 const axiosInstance = axios.create({
-<<<<<<< Updated upstream
-  baseURL: 'https://think-tree-production.up.railway.app',
-=======
   baseURL,
->>>>>>> Stashed changes
   headers: {
     'Content-Type': 'application/json',
   }

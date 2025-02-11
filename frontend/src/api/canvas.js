@@ -1,27 +1,5 @@
 const express = require('express');
 const router = express.Router();
-<<<<<<< Updated upstream
-const Canvas = require('../models/Canvas'); 
-
-router.post('/', async (req, res) => {
-  try {
-    const canvas = new Canvas(req.body);
-    const savedCanvas = await canvas.save();
-    res.status(201).json(savedCanvas);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
-
-router.get('/', async (req, res) => {
-  try {
-    const canvases = await Canvas.find();
-    res.json(canvases);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-=======
 const Canvas = require('../models/Canvas');
 const authenticateToken = require('../middleware/auth');
 router.get('/', async (req, res) => {
@@ -56,7 +34,6 @@ router.post('/', authenticateToken, async (req, res) => {
   }
 });
 
->>>>>>> Stashed changes
 router.get('/:id', async (req, res) => {
   try {
     const canvas = await Canvas.findById(req.params.id);
