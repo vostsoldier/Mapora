@@ -109,9 +109,6 @@ function Members({ addToast }) {
           <section className="projects-section">
             <div className="section-header">
               <h1>Your Projects</h1>
-              <button className="new-project-btn" onClick={() => navigate('/app')}>
-                New Project
-              </button>
             </div>
             <div className="projects-grid">
               <div 

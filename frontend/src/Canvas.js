@@ -512,12 +512,6 @@ const Canvas = () => {
               <button className="btn" onClick={() => setIsAdding(true)}>
                 Add Node
               </button>
-              <button className="btn" onClick={saveTree}>
-                Save Tree
-              </button>
-              <button className="btn" onClick={() => navigate('/app/new')}>
-                New Canvas
-              </button>
               <button className="btn cancel" onClick={handleLogout}>
                 Logout
               </button>
