@@ -17,6 +17,14 @@ function Members({ addToast }) {
     loadCanvases();
   }, []);
 
+  useEffect(() => {
+    const handleFocus = () => {
+      loadCanvases();
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
+
   const loadCanvases = async () => {
     try {
       const response = await api.get('/canvas');
@@ -27,22 +35,21 @@ function Members({ addToast }) {
     }
   };
 
-  const handleCreateCanvas = async () => {
-    if (!newCanvasName.trim()) {
-      alert('Canvas name cannot be empty.');
-      return;
-    }
-
+  const handleCreateCanvas = async (e) => {
+    e.preventDefault();
     try {
-      const response = await api.post('/canvas', {
-        name: newCanvasName,
-        description: newCanvasDescription
+      const response = await api.post('/canvas', { 
+        name: newCanvasName, 
+        description: newCanvasDescription 
       });
-      navigate(`/app/${response.data._id}`);
-      addToast?.('Canvas created successfully!', 'success');
-      setNewCanvasName('');
-      setNewCanvasDescription('');
-      setIsCreating(false);
+      const createdCanvas = response.data;
+      const id = createdCanvas._id || createdCanvas.canvasId;
+      if (!id) {
+        console.warn('Canvas id is missing:', response.data);
+        return;
+      }
+      setCanvases((prev) => [...prev, createdCanvas]);
+      navigate(`/app/${id}`);
     } catch (error) {
       console.error('Error creating canvas:', error);
       addToast?.('Failed to create canvas', 'error');
@@ -118,11 +125,7 @@ function Members({ addToast }) {
                 </div>
               </div>
               {canvases.map((canvas) => (
-                <div 
-                  key={canvas._id} 
-                  className="project-card"
-                  onClick={() => navigateToCanvas(canvas._id)}
-                >
+                <div key={canvas._id} className="project-card" onClick={() => navigateToCanvas(canvas._id)}>
                   <h3>{canvas.name}</h3>
                   <p>{canvas.description}</p>
                   <p>Created: {new Date(canvas.createdAt).toLocaleDateString()}</p>
