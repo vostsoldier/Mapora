@@ -123,7 +123,7 @@ function Members({ addToast }) {
     >
       <nav className="dashboard-sidebar">
         <div className="logo-section">
-          <Link to="/" className="dashboard-logo">Think Tree</Link>
+          <Link to="/" className="dashboard-logo">Mapora</Link>
         </div>
         <div className="nav-sections">
           <button 

@@ -880,7 +880,7 @@ function App() {
                   <Sidebar onAddBox={handleAddBox} />
                   <div className="main">
                     <header className="App-header">
-                      <Link to="/" className="page-title"><h1>Think Tree</h1></Link>
+                      <Link to="/" className="page-title"><h1>Mapora</h1></Link>
                       <div className="button-container">
                         <button className="btn" onClick={() => setIsAdding(true)}>
                           Add Node

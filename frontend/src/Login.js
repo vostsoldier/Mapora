@@ -39,9 +39,9 @@ function Login({ onLogin }) {
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.6 }}
     >
-      <Link to="/" className="page-title">Think Tree</Link>
+      <Link to="/" className="page-title">Mapora</Link>
       <div className="form-container">
-        <h1 className="product-name">Think Tree - Login</h1>
+        <h1 className="product-name">Mapora - Login</h1>
         <form className="auth-form" onSubmit={handleLogin}>
           <input
             type="text"

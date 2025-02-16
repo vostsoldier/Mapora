@@ -1,50 +1,130 @@
 .pricing-container {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    background-color: #f9f9f9;
-  }
-  
-  .main-content {
-    flex: 1;
-    padding: 40px;
-    text-align: center;
-  }
-  
-  .pricing-plans {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin-top: 30px;
-  }
-  
-  .pricing-plan {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    width: 280px;
-  }
-  
-  .pricing-plan h2 {
-    margin-bottom: 10px;
-  }
-  
-  .pricing-plan ul {
-    list-style: none;
-    padding: 0;
-    margin: 20px 0;
-  }
-  
-  .pricing-plan ul li {
-    margin-bottom: 8px;
-  }
-  
-  .pricing-plan button {
-    padding: 10px 20px;
-    background-color: #2563EB;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f9f9f9;
+}
+
+.navbar .logo-title .title {
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+.main-content {
+  flex: 1;
+  padding: 40px;
+  text-align: center;
+}
+
+.pricing-plans {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 30px;
+}
+
+.pricing-plan {
+  background: white;
+  padding: 30px 20px;
+  border-radius: 8px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  width: 320px;
+  transition: transform 0.3s, box-shadow 0.3s;
+  display: flex;
+  flex-direction: column;
+  min-height: 480px;
+}
+
+.pricing-plan:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.pricing-plan h2 {
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+  margin-top: -3px;
+}
+
+.pricing-plan p {
+  font-size: 1.25rem;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+.pricing-plan ul {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+  text-align: left;
+  line-height: 1.6;
+}
+
+.pricing-plan ul li {
+  margin-bottom: 10px;
+}
+
+.pricing-plan button {
+  width: 100%;
+  padding: 12px;
+  background-color: #2563EB;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-top: auto;
+}
+
+.pricing-plan button:hover {
+  background-color: #1e4aa8;
+}
+
+/* New improved styles for Feature Comparison Section */
+.feature-comparison {
+  margin: 50px auto;
+  width: 90%;
+  max-width: 1000px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.feature-comparison h2 {
+  font-size: 2.2rem;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #2563EB;
+}
+
+.feature-comparison table {
+  width: 100%;
+  border-collapse: collapse;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.feature-comparison thead {
+  background-color: #2563EB;
+}
+
+.feature-comparison thead th {
+  color: #fff;
+  padding: 12px 15px;
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.feature-comparison tbody td {
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  text-align: center;
+  font-size: 1rem;
+  color: #333;
+}
+
+.feature-comparison tbody tr {
+  background-color: #fff;
+}
+
+.feature-comparison tbody tr:nth-of-type(even) {
+  background-color: #f9f9f9;
+}
