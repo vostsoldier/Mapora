@@ -896,6 +896,39 @@ button {
   color: #2563EB;
   margin-top: 10px;
 }
+
+.project-card-menu {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+}
+
+.project-card-menu button {
+  background: none;
+  border: none;
+  font-size: 1.5em;
+  cursor: pointer;
+}
+
+.menu-dropdown {
+  position: absolute;
+  right: 0;
+  top: 30px;
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
+  z-index: 10;
+}
+
+.menu-item {
+  padding: 0.5em 1em;
+  cursor: pointer;
+}
+
+.menu-item:hover {
+  background: #f0f0f0;
+}
+
 .dashboard-container {
   display: flex;
   min-height: 100vh;

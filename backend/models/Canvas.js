@@ -13,14 +13,14 @@ const CanvasSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
-  nodes: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'ThinkTreeNode'
-  }],
-  edges: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'ThinkTreeEdge'
-  }],
+  nodes: {
+    type: [mongoose.Schema.Types.Mixed],
+    default: []
+  },
+  edges: {
+    type: [mongoose.Schema.Types.Mixed],
+    default: []
+  },
   createdAt: {
     type: Date,
     default: Date.now

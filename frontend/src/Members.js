@@ -12,6 +12,10 @@ function Members({ addToast }) {
   const [isCreating, setIsCreating] = useState(false);
   const [newCanvasName, setNewCanvasName] = useState('');
   const [newCanvasDescription, setNewCanvasDescription] = useState('');
+  const [menuCanvasId, setMenuCanvasId] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingCanvasId, setEditingCanvasId] = useState(null);
+  const [editedCanvasName, setEditedCanvasName] = useState('');
 
   useEffect(() => {
     loadCanvases();
@@ -54,6 +58,48 @@ function Members({ addToast }) {
       console.error('Error creating canvas:', error);
       addToast?.('Failed to create canvas', 'error');
     }
+  };
+
+  const handleDeleteCanvas = async (canvasId) => {
+    try {
+      await api.delete(`/canvas/${canvasId}`);
+      setCanvases(canvases.filter((canvas) => canvas._id !== canvasId));
+      addToast?.('Canvas deleted successfully', 'success');
+    } catch (error) {
+      console.error('Error deleting canvas:', error);
+      addToast?.('Failed to delete canvas', 'error');
+    }
+    setMenuCanvasId(null);
+  };
+
+  const handleOpenEdit = (canvas) => {
+    setEditingCanvasId(canvas._id);
+    setEditedCanvasName(canvas.name);
+    setIsEditing(true);
+    setMenuCanvasId(null);
+  };
+
+  const handleEditCanvas = async () => {
+    if (!editedCanvasName.trim()) {
+      addToast?.('Canvas name cannot be empty', 'error');
+      return;
+    }
+    try {
+      const response = await api.put(`/canvas/${editingCanvasId}`, { name: editedCanvasName });
+      const updatedCanvas = response.data;
+      setCanvases(
+        canvases.map((canvas) =>
+          canvas._id === editingCanvasId ? updatedCanvas : canvas
+        )
+      );
+      addToast?.('Canvas updated successfully', 'success');
+    } catch (error) {
+      console.error('Error updating canvas:', error);
+      addToast?.('Failed to update canvas', 'error');
+    }
+    setIsEditing(false);
+    setEditingCanvasId(null);
+    setEditedCanvasName('');
   };
 
   const navigateToCanvas = (canvasId) => {
@@ -122,10 +168,36 @@ function Members({ addToast }) {
                 </div>
               </div>
               {canvases.map((canvas) => (
-                <div key={canvas._id} className="project-card" onClick={() => navigateToCanvas(canvas._id)}>
-                  <h3>{canvas.name}</h3>
-                  <p>{canvas.description}</p>
-                  <p>Created: {new Date(canvas.createdAt).toLocaleDateString()}</p>
+                <div key={canvas._id} className="project-card">
+                  <div 
+                    className="project-card-content" 
+                    onClick={() => navigateToCanvas(canvas._id)}
+                  >
+                    <h3>{canvas.name}</h3>
+                    <p>{canvas.description}</p>
+                    <p>Created: {new Date(canvas.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <div className="project-card-menu">
+                    <button onClick={() => setMenuCanvasId(canvas._id)}>
+                      &#8942;
+                    </button>
+                    {menuCanvasId === canvas._id && (
+                      <div className="menu-dropdown">
+                        <div 
+                          className="menu-item" 
+                          onClick={() => handleOpenEdit(canvas)}
+                        >
+                          Edit
+                        </div>
+                        <div 
+                          className="menu-item" 
+                          onClick={() => handleDeleteCanvas(canvas._id)}
+                        >
+                          Delete
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -147,6 +219,23 @@ function Members({ addToast }) {
                   <div className="modal-actions">
                     <button onClick={handleCreateCanvas}>Create</button>
                     <button onClick={() => setIsCreating(false)}>Cancel</button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {isEditing && (
+              <div className="modal" onClick={() => setIsEditing(false)}>
+                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                  <h2>Edit Canvas Name</h2>
+                  <input
+                    type="text"
+                    value={editedCanvasName}
+                    onChange={(e) => setEditedCanvasName(e.target.value)}
+                    placeholder="Enter new canvas name"
+                  />
+                  <div className="modal-actions">
+                    <button onClick={handleEditCanvas}>Save</button>
+                    <button onClick={() => setIsEditing(false)}>Cancel</button>
                   </div>
                 </div>
               </div>

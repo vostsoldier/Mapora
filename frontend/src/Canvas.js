@@ -195,8 +195,15 @@ const Canvas = () => {
       try {
         if (!canvasId) return;
         const response = await api.get(`/canvas/${canvasId}`);
-        setNodes(response.data.nodes);
-        setEdges(response.data.edges);
+        const canvasData = response.data;
+        const fetchedNodes = canvasData.nodes.map((node) => ({
+          id: node.id || node._id,
+          data: { label: node.label || '' },
+          position: node.position,
+          type: node.type
+        }));
+        setNodes(fetchedNodes);
+        setEdges(canvasData.edges);
       } catch (error) {
         console.error('Error fetching canvas:', error);
       }
@@ -218,7 +225,7 @@ const Canvas = () => {
     const payload = {
       nodes: (nodes || []).map((node) => ({
         id: node.id,
-        label: node.data.label,
+        label: node.data?.label || '',
         position: node.position,
         type: node.type,
       })),
