@@ -40,7 +40,7 @@ function Home({ onLogin }) {
         <div className="nav-links">
           <Link to="/features">Features</Link>
           <Link to="/about">About</Link>
-          <Link to="/contact">Contact</Link>
+          <Link to="/pricing">Pricing</Link>
         </div>
       </nav>
       <header className="hero-section">

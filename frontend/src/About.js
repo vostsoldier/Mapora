@@ -22,7 +22,6 @@ function About() {
         <div className="nav-links">
           <Link to="/">Home</Link>
           <Link to="/features">Features</Link>
-          <Link to="/contact">Contact</Link>
         </div>
       </nav>
 
