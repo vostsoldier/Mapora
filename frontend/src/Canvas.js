@@ -16,6 +16,54 @@ import 'reactflow/dist/style.css';
 import './App.css';
 import debounce from 'lodash.debounce';
 
+const TextboxNode = ({ data, id }) => {
+  const { text, setNodes } = data;
+  const [isEditing, setIsEditing] = useState(false);
+  const textRef = useRef(null);
+
+  const handleDoubleClick = (e) => {
+    e.stopPropagation();
+    setIsEditing(true);
+    setTimeout(() => textRef.current && textRef.current.focus(), 0);
+  };
+
+  const handleBlur = (e) => {
+    const newText = e.target.innerText;
+    if (typeof setNodes === 'function') {
+      setNodes((nds) =>
+        nds.map((node) =>
+          node.id === id ? { ...node, data: { ...node.data, text: newText } } : node
+        )
+      );
+    }
+    setIsEditing(false);
+  };
+
+  return (
+    <div
+      onDoubleClick={handleDoubleClick}
+      onContextMenu={(e) => {
+        e.preventDefault();
+      }}
+      onMouseDown={(e) => {
+        if (isEditing && e.button === 0) {
+          e.stopPropagation();
+        }
+      }}
+    >
+      <div
+        ref={textRef}
+        contentEditable={isEditing}
+        suppressContentEditableWarning
+        onBlur={handleBlur}
+        style={{ outline: 'none' }}
+      >
+        {text}
+      </div>
+    </div>
+  );
+};
+
 const Box = ({ data, id, setNodes, nodes }) => {
   const [dimensions, setDimensions] = useState({
     width: data.width || 150,
@@ -128,22 +176,16 @@ const Box = ({ data, id, setNodes, nodes }) => {
   );
 };
 
-function Sidebar({ onAddBox }) {
+function Sidebar({ onAddBox, onAddTextbox }) {
   return (
     <aside>
       <div className="description">Use the buttons below to add elements:</div>
       <div className="sidebar-buttons">
         <div className="dndnode box-node" onClick={onAddBox}>
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2" />
-          </svg>
-          Box
+          <span>Box</span>
+        </div>
+        <div className="dndnode textbox-node" onClick={onAddTextbox}>
+          <span>Textbox</span>
         </div>
       </div>
     </aside>
@@ -159,7 +201,7 @@ const COLOR_PRESETS = [
   { name: 'Gray', value: '#9CA3AF' },
 ];
 
-const Canvas = () => {
+function Canvas() {
   const { canvasId } = useParams();
   const navigate = useNavigate();
   const reactFlowInstance = useRef(null);
@@ -177,8 +219,8 @@ const Canvas = () => {
   const [editedTitle, setEditedTitle] = useState('');
   const [selectedLabelColor, setSelectedLabelColor] = useState('#10B981'); 
   const [authToken, setAuthToken] = useState(localStorage.getItem('token') || '');
-
-  const customNodeTypes = useMemo(() => ({
+  const nodeTypes = useMemo(() => ({
+    textbox: TextboxNode,
     box: Box,
   }), []);
 
@@ -284,6 +326,20 @@ const Canvas = () => {
       alert('Failed to add node.');
       addToast('Failed to add node.', 'error');
     }
+  };
+  const handleAddTextbox = () => {
+    const newTextboxNode = {
+      id: `temp-textbox-${Date.now()}`,
+      type: 'textbox',
+      data: { 
+        text: 'New Text', 
+        setNodes, 
+        nodes   
+      },
+      position: { x: Math.random() * 250, y: Math.random() * 250 },
+    };
+    
+    setNodes((nds) => [...nds, newTextboxNode]);
   };
   const handleAddBox = () => {
     const newBox = {
@@ -509,7 +565,7 @@ const Canvas = () => {
   return (
     <ReactFlowProvider>
       <div className="wrapper">
-        <Sidebar onAddBox={handleAddBox} />
+        <Sidebar onAddBox={handleAddBox} onAddTextbox={handleAddTextbox} />
         <div className="main">
           <header className="App-header">
             <Link to="/" className="page-title">
@@ -586,14 +642,13 @@ const Canvas = () => {
           )}
           <div className="react-flow-wrapper">
             <ReactFlow
-              nodeTypes={customNodeTypes}
               nodes={nodes}
               edges={edges}
+              nodeTypes={nodeTypes}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnectHandler}
               onNodeContextMenu={onNodeContextMenu}
-              onEdgeClick={onEdgeClickHandler}
               fitView
             >
               <MiniMap />
