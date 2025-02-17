@@ -239,10 +239,13 @@ function Canvas() {
         const response = await api.get(`/canvas/${canvasId}`);
         const canvasData = response.data;
         const fetchedNodes = canvasData.nodes.map((node) => ({
-          id: node.id || node._id,
-          data: { label: node.label || '' },
+          id: node.id,
+          data:
+            node.type === 'textbox'
+              ? { text: node.text || '', setNodes } 
+              : { label: node.label || '' },
           position: node.position,
-          type: node.type
+          type: node.type,
         }));
         setNodes(fetchedNodes);
         setEdges(canvasData.edges);
@@ -267,19 +270,26 @@ function Canvas() {
     const payload = {
       nodes: (nodes || []).map((node) => ({
         id: node.id,
-        label: node.data?.label || '',
         position: node.position,
         type: node.type,
+        ...(node.type === 'textbox'
+            ? { text: node.data?.text || '' }
+            : { label: node.data?.label || '' }),
+        style: node.style || {},
+        data: node.data || {},
       })),
       edges: (edges || []).map((edge) => ({
         id: edge.id,
         source: edge.source,
         target: edge.target,
         animated: edge.animated,
+        reverseAnimated: edge.reverseAnimated || false,
+        data: { ...(edge.data || {}), isBidirectional: edge.data?.isBidirectional || false },
+        style: edge.style || {},
       })),
     };
   
-    console.log('Saving canvas with id:', canvasId);
+    console.log('Saving canvas with id:', canvasId, payload);
   
     try {
       await api.put(`/canvas/${canvasId}`, payload);
@@ -562,6 +572,21 @@ function Canvas() {
     return () => window.removeEventListener('click', handleClickOutside);
   }, [contextMenu, edgeContextMenu]);
 
+  useEffect(() => {
+    const handleClick = (event) => {
+      if (event.target.closest('.react-flow__edge-path')) {
+        return;
+      }
+      setContextMenu(null);
+      setEdgeContextMenu(null);
+      setSelectedEdge(null);
+      setSelectedNode(null);
+    };
+
+    window.addEventListener('click', handleClick);
+    return () => window.removeEventListener('click', handleClick);
+  }, []);
+
   return (
     <ReactFlowProvider>
       <div className="wrapper">
@@ -649,6 +674,16 @@ function Canvas() {
               onEdgesChange={onEdgesChange}
               onConnect={onConnectHandler}
               onNodeContextMenu={onNodeContextMenu}
+              onEdgeClick={(event, edge) => {
+                event.preventDefault();
+                event.stopPropagation();
+                setSelectedEdge(edge);
+                setEdgeContextMenu({
+                  mouseX: event.clientX - 2,
+                  mouseY: event.clientY - 4,
+                });
+                setContextMenu(null);
+              }}
               fitView
             >
               <MiniMap />
