@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 
 function Signup({ onLogin }) {
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ function Signup({ onLogin }) {
   const handleSignup = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.post('/api/users/signup', { username, password });
+      const response = await api.post('/api/users/signup', { username, email, password });
       setMessage('Signup successful!');
       const loginResponse = await api.post('/api/users/login', { username, password });
       localStorage.setItem('token', loginResponse.data.token);
@@ -52,6 +53,13 @@ function Signup({ onLogin }) {
             required
           />
           <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+            required
+          />
+          <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -64,7 +72,7 @@ function Signup({ onLogin }) {
         </form>
         <p className="message">{message}</p>
         <p>
-          Already have an account? <a href="/login">Login</a>
+          Already have an account? <Link to="/login">Login</Link>
         </p>
       </div>
       <div className="content-container">
