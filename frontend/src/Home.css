@@ -363,3 +363,103 @@
 .btn.dashboard:hover {
   background-color: #1D4ED8;
 }
+.terms-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.terms-modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 800px;
+  width: 90%;
+  max-height: 80%;
+  overflow-y: auto;
+}
+
+.terms-modal-content h2 {
+  margin-top: 0;
+}
+
+.terms-modal-content .terms-text {
+  text-align: left;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #333;
+}
+
+.terms-modal-content .btn {
+  margin-top: 20px;
+}
+.terms-checkbox {
+  margin: 15px 0;
+  display: flex;
+  align-items: center;
+}
+
+.terms-checkbox input {
+  margin-right: 8px;
+}
+
+.terms-link {
+  color: #2563EB;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.privacy-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.privacy-modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 800px;
+  width: 90%;
+  max-height: 80%;
+  overflow-y: auto;
+}
+
+.privacy-modal-content h2 {
+  margin-top: 0;
+}
+
+.privacy-modal-content .privacy-text {
+  text-align: left;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #333;
+}
+
+.privacy-modal-content .btn {
+  margin-top: 20px;
+}
+.privacy-link-container {
+  margin: 10px 0;
+  text-align: center;
+}
+
+.privacy-link {
+  color: #2563EB;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.9rem;
+}

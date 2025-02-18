@@ -1,19 +1,28 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from './api/apiWrapper';
-import './Home.css'; 
-import featuresImage from './assets/features.webp'; 
+import './Home.css';
+import featuresImage from './assets/features.webp';
 import { motion } from 'framer-motion';
+import TermsModal from './components/TermsModal';
+import PrivacyPolicyModal from './components/PrivacyPolicyModal';
 
 function Signup({ onLogin }) {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const navigate = useNavigate();
 
   const handleSignup = async (e) => {
     e.preventDefault();
+    if (!termsAccepted) {
+      setMessage('You must accept the Terms of Service to sign up.');
+      return;
+    }
     try {
       const response = await api.post('/api/users/signup', { username, email, password });
       setMessage('Signup successful!');
@@ -21,16 +30,10 @@ function Signup({ onLogin }) {
       localStorage.setItem('token', loginResponse.data.token);
       localStorage.removeItem('isDemo'); 
       onLogin(loginResponse.data.token);
-      
       navigate('/members');
     } catch (error) {
       setMessage(error.response?.data?.message || 'Signup failed.');
     }
-  };
-
-  const handleDemo = () => {
-    onLogin(null, true);
-    navigate('/app');
   };
 
   return (
@@ -66,6 +69,22 @@ function Signup({ onLogin }) {
             placeholder="Password"
             required
           />
+          <div className="terms-checkbox">
+            <input 
+              type="checkbox" 
+              id="terms" 
+              checked={termsAccepted}
+              onChange={(e) => setTermsAccepted(e.target.checked)}
+            />
+            <label htmlFor="terms">
+              I accept the <span className="terms-link" onClick={() => setShowTermsModal(true)}>Terms of Service</span>
+            </label>
+          </div>
+          <div className="privacy-link-container">
+            <span className="privacy-link" onClick={() => setShowPrivacyModal(true)}>
+              Read our Privacy Policy
+            </span>
+          </div>
           <button type="submit" className="btn signup">
             Signup
           </button>
@@ -85,6 +104,8 @@ function Signup({ onLogin }) {
         </ul>
         <img src={featuresImage} alt="Features" /> 
       </div>
+      {showTermsModal && <TermsModal onClose={() => setShowTermsModal(false)} />}
+      {showPrivacyModal && <PrivacyPolicyModal onClose={() => setShowPrivacyModal(false)} />}
     </motion.div>
   );
 }
