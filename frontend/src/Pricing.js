@@ -1,10 +1,12 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import './Pricing.css';
 import './Home.css';
 
 function Pricing() {
+  const navigate = useNavigate();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -41,7 +43,7 @@ function Pricing() {
                 <li><strong>Integrations:</strong> Basic or no third-party integrations</li>
                 <li><strong>Support:</strong> Community support and basic help center</li>
               </ul>
-              <button>Get Started</button>
+              <button onClick={() => navigate('/signup')}>Get Started</button>
             </div>
             <div className="pricing-plan">
               <h2>Pro</h2>
@@ -55,10 +57,9 @@ function Pricing() {
                 <li><strong>Integrations:</strong> Full integration with external tools</li>
                 <li><strong>Support:</strong> Priority support with onboarding assistance</li>
               </ul>
-              <button>Upgrade Now</button>
+              <button onClick={() => navigate('/purchase')}>Upgrade Now</button>
             </div>
           </div>
-          {/* New Feature Comparison Section */}
           <section className="feature-comparison">
             <h2>Feature Comparison</h2>
             <table>

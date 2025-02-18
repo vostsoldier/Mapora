@@ -25,6 +25,7 @@ import api from './api/apiWrapper';
 import { motion, AnimatePresence } from 'framer-motion';
 import Toast from './components/Toast';
 import Pricing from './Pricing';
+import Purchase from './Purchase';
 const COLOR_PRESETS = [
   { name: 'Green', value: '#10B981' },
   { name: 'Red', value: '#EF4444' },
@@ -1170,6 +1171,7 @@ function App() {
             </motion.div>
           } />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/purchase" element={<Purchase />} />
         </Routes>
       </AnimatePresence>
     </ReactFlowProvider>

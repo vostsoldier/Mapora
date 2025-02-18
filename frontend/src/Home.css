@@ -463,3 +463,40 @@
   cursor: pointer;
   font-size: 0.9rem;
 }
+.purchase-container {
+  max-width: 400px;
+  margin: 40px auto;
+  text-align: center;
+}
+
+.payment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.payment-form input {
+  padding: 12px;
+  font-size: 16px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.payment-row {
+  display: flex;
+  gap: 10px;
+}
+
+.pay-btn {
+  background-color: #2563EB;
+  color: white;
+  width: 100%;
+  margin-top: 15px;
+}
+
+.message {
+  margin-top: 10px;
+  color: red;
+  font-weight: bold;
+}
