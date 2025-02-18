@@ -7,6 +7,7 @@ require('dotenv').config();
 
 router.post('/signup', async (req, res) => {
   const { username, password, email } = req.body;
+  console.log('Signup req.body:', req.body); 
   if (!username || !password || !email) {
     return res.status(400).json({ message: 'Username, password, and email are required.' });
   }

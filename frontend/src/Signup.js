@@ -24,9 +24,9 @@ function Signup({ onLogin }) {
       return;
     }
     try {
-      const response = await api.post('/api/users/signup', { username, email, password });
+      const response = await api.post('/users/signup', { username, email, password });
       setMessage('Signup successful!');
-      const loginResponse = await api.post('/api/users/login', { username, password });
+      const loginResponse = await api.post('/users/login', { username, password });
       localStorage.setItem('token', loginResponse.data.token);
       localStorage.removeItem('isDemo'); 
       onLogin(loginResponse.data.token);
