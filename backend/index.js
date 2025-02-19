@@ -1,16 +1,19 @@
 const express = require('express');
 const cors = require('cors');
+const http = require('http');
+const { Server } = require('socket.io');
+const WebSocket = require('ws');
+const { setupWSConnection } = require('y-websocket/bin/utils');
 const mongoose = require('mongoose');
-const app = express();
-const PORT = process.env.PORT || 5001; 
 require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 5001;
+
 const corsOptions = {
   origin: [
-    'https://think-tree-git-main-vostsoldiers-projects.vercel.app',
     'https://mapora.vercel.app',
-    'http://localhost:3000',
-    'https://localhost:3000/members',
-    'https://think-tree-production.up.railway.app'
+    'http://localhost:3000'
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -18,9 +21,36 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
-
 app.use(express.json());
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: [
+      'https://mapora.vercel.app',
+      'http://localhost:3000'
+    ],
+    methods: ['GET', 'POST'],
+  }
+});
+app.locals.io = io;
+
+io.on('connection', (socket) => {
+  console.log('New client connected');
+
+  socket.on('joinCanvas', (canvasId) => {
+    socket.join(canvasId);
+    console.log(`Client joined canvas room ${canvasId}`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected');
+  });
+});
+const wss = new WebSocket.Server({ server, path: '/yjs' });
+wss.on('connection', (conn, req) => {
+  setupWSConnection(conn, req, { gc: true });
+});
+
 const thinkTreeRoutes = require('./routes/thinkTree');
 app.use('/api/thinking-trees', thinkTreeRoutes);
 const usersRoutes = require('./routes/users');
@@ -54,7 +84,7 @@ mongoose.connect(process.env.MONGO_URI, {
 })
 .then(() => {
   console.log('MongoDB connected');
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
   });
 })

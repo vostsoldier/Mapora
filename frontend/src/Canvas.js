@@ -15,6 +15,9 @@ import api from './api/apiWrapper';
 import 'reactflow/dist/style.css';
 import './App.css';
 import debounce from 'lodash.debounce';
+import { io } from 'socket.io-client';
+import * as Y from 'yjs';
+import { WebsocketProvider } from 'y-websocket';
 
 const TextboxNode = ({ data, id }) => {
   const { text, setNodes } = data;
@@ -222,10 +225,16 @@ function Canvas() {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [shareMessage, setShareMessage] = useState('');
+  const socketRef = useRef(null);
   const nodeTypes = useMemo(() => ({
     textbox: TextboxNode,
     box: Box,
   }), []);
+
+  const ydocRef = useRef(null);
+  const providerRef = useRef(null);
+  const yNodesRef = useRef(null);
+  const yEdgesRef = useRef(null);
 
   const addToast = (message, type = 'info') => {
     const id = Date.now();
@@ -258,6 +267,57 @@ function Canvas() {
     };
     fetchCanvas();
   }, [canvasId, setNodes, setEdges]);
+
+  useEffect(() => {
+    const socketURL =
+      process.env.NODE_ENV === 'production'
+        ? process.env.REACT_APP_SOCKET_URL  
+        : 'http://localhost:5001';
+    const socket = io(socketURL);
+    socketRef.current = socket;
+    socket.emit('joinCanvas', canvasId);
+    socket.on('canvasUpdated', (updatedCanvas) => {
+      console.log('Canvas updated via socket:', updatedCanvas);
+      setNodes(updatedCanvas.nodes);
+      setEdges(updatedCanvas.edges);
+    });
+    return () => {
+      socket.disconnect();
+    };
+  }, [canvasId]);
+
+  useEffect(() => {
+    const ydoc = new Y.Doc();
+    ydocRef.current = ydoc;
+    const wsUrl =
+      process.env.NODE_ENV === 'production'
+        ? process.env.REACT_APP_YJS_URL //I DONT HAVE ONE YET, CHECK THIS 
+        : 'ws://localhost:5001'; 
+    const provider = new WebsocketProvider(wsUrl, canvasId, ydoc, { path: '/yjs' });
+    providerRef.current = provider;
+    const yNodes = ydoc.getArray('nodes');
+    const yEdges = ydoc.getArray('edges');
+    yNodesRef.current = yNodes;
+    yEdgesRef.current = yEdges;
+    const updateLocalNodes = () => {
+      const updatedNodes = yNodes.toArray();
+      setNodes(updatedNodes);
+    };
+    const updateLocalEdges = () => {
+      const updatedEdges = yEdges.toArray();
+      setEdges(updatedEdges);
+    };
+    yNodes.observe(updateLocalNodes);
+    yEdges.observe(updateLocalEdges);
+  
+    return () => {
+      yNodes.unobserve(updateLocalNodes);
+      yEdges.unobserve(updateLocalEdges);
+      provider.disconnect();
+      ydoc.destroy();
+    };
+  }, [canvasId, setNodes, setEdges]);
+
   const onConnectHandler = useCallback(
     (params) => {
       setEdges((eds) => addEdge({ ...params, animated: true }, eds || []));
