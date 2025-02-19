@@ -27,6 +27,8 @@ const usersRoutes = require('./routes/users');
 app.use('/api/users', usersRoutes);
 const canvasRoutes = require('./routes/canvas');
 app.use('/api/canvas', canvasRoutes);
+const invitationsRouter = require('./routes/invitations');
+app.use('/api/invitations', invitationsRouter);
 app.get('/', (req, res) => {
   res.send('Hello from the backend!');
 });

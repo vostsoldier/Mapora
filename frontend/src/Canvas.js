@@ -219,6 +219,9 @@ function Canvas() {
   const [editedTitle, setEditedTitle] = useState('');
   const [selectedLabelColor, setSelectedLabelColor] = useState('#10B981'); 
   const [authToken, setAuthToken] = useState(localStorage.getItem('token') || '');
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [shareMessage, setShareMessage] = useState('');
   const nodeTypes = useMemo(() => ({
     textbox: TextboxNode,
     box: Box,
@@ -587,6 +590,20 @@ function Canvas() {
     return () => window.removeEventListener('click', handleClick);
   }, []);
 
+  const handleShare = async () => {
+    try {
+      await api.post('/invitations', { canvasId, inviteeEmail: inviteEmail }, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      setShareMessage('Invitation sent.');
+      setInviteEmail('');
+      setShareModalOpen(false);
+    } catch (error) {
+      console.error('Error sending invitation:', error);
+      setShareMessage('Error sending invitation.');
+    }
+  };
+
   return (
     <ReactFlowProvider>
       <div className="wrapper">
@@ -599,6 +616,9 @@ function Canvas() {
             <div className="button-container">
               <button className="btn" onClick={() => setIsAdding(true)}>
                 Add Node
+              </button>
+              <button className="btn share" onClick={() => setShareModalOpen(true)}>
+                Share Canvas
               </button>
               <button className="btn cancel" onClick={handleLogout}>
                 Logout
@@ -662,6 +682,24 @@ function Canvas() {
                     Cancel
                   </button>
                 </div>
+              </div>
+            </div>
+          )}
+          {shareModalOpen && (
+            <div className="modal" onClick={() => setShareModalOpen(false)}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <h2>Share Canvas</h2>
+                <input
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  placeholder="Enter invitee email"
+                  required
+                />
+                <button className="btn" onClick={handleShare}>
+                  Send Invitation
+                </button>
+                {shareMessage && <p>{shareMessage}</p>}
               </div>
             </div>
           )}

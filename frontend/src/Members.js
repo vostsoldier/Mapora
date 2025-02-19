@@ -16,6 +16,8 @@ function Members({ addToast }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editingCanvasId, setEditingCanvasId] = useState(null);
   const [editedCanvasName, setEditedCanvasName] = useState('');
+  const [invitations, setInvitations] = useState([]);
+  const authToken = localStorage.getItem('token');
 
   useEffect(() => {
     loadCanvases();
@@ -28,6 +30,21 @@ function Members({ addToast }) {
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
   }, []);
+
+  useEffect(() => {
+    const loadInvitations = async () => {
+      try {
+        const response = await api.get('/invitations', {
+          headers: { Authorization: `Bearer ${authToken}` }
+        });
+        setInvitations(response.data);
+      } catch (error) {
+        console.error('Error loading invitations:', error);
+        addToast('Failed to load invitations', 'error');
+      }
+    };
+    loadInvitations();
+  }, [authToken, addToast]);
 
   const loadCanvases = async () => {
     try {
@@ -111,6 +128,30 @@ function Members({ addToast }) {
     localStorage.removeItem('isDemo');
     navigate('/', { replace: true });
     window.location.reload();
+  };
+
+  const handleAccept = async (invitationId) => {
+    try {
+      await api.put(`/invitations/${invitationId}/accept`, {}, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      setInvitations(invitations.filter(inv => inv._id !== invitationId));
+      addToast('Invitation accepted', 'success');
+    } catch (error) {
+      addToast('Failed to accept invitation', 'error');
+    }
+  };
+
+  const handleReject = async (invitationId) => {
+    try {
+      await api.delete(`/invitations/${invitationId}`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      setInvitations(invitations.filter(inv => inv._id !== invitationId));
+      addToast('Invitation rejected', 'success');
+    } catch (error) {
+      addToast('Failed to reject invitation', 'error');
+    }
   };
 
   return (
@@ -254,6 +295,20 @@ function Members({ addToast }) {
             <h1>Settings</h1>
           </section>
         )}
+
+        <section className="invitations-section">
+          <h2>Invitations</h2>
+          {invitations.length === 0 && <p>No pending invitations.</p>}
+          {invitations.map(inv => (
+            <div key={inv._id} className="invitation-item">
+              <p>
+                You have been invited to collaborate on canvas ID: {inv.canvasId}
+              </p>
+              <button onClick={() => handleAccept(inv._id)}>Accept</button>
+              <button onClick={() => handleReject(inv._id)}>Reject</button>
+            </div>
+          ))}
+        </section>
       </main>
     </motion.div>
   );

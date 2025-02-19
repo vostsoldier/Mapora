@@ -15,8 +15,16 @@ router.get('/:id', authenticateToken, async (req, res) => {
   try {
     const canvas = await Canvas.findById(req.params.id);
     if (!canvas) return res.status(404).json({ message: 'Canvas not found' });
-    if (canvas.userId !== req.user.userId) { 
-      return res.status(403).json({ message: 'Access forbidden' });
+    if (canvas.userId.toString() !== req.user.userId.toString()) {
+      const Invitation = require('../models/Invitation');
+      const invitation = await Invitation.findOne({
+        canvasId: canvas._id,
+        inviteeEmail: req.user.email,
+        status: 'accepted'
+      });
+      if (!invitation) {
+        return res.status(403).json({ message: 'Access forbidden' });
+      }
     }
     res.json(canvas);
   } catch (error) {
@@ -45,7 +53,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const canvas = await Canvas.findById(req.params.id);
     if (!canvas) return res.status(404).json({ message: 'Canvas not found' });
-    if (canvas.userId !== req.user.userId) { 
+    if (canvas.userId.toString() !== req.user.userId.toString()) {
       return res.status(403).json({ message: 'Access forbidden' });
     }
     const updatedCanvas = await Canvas.findByIdAndUpdate(req.params.id, req.body, { new: true });
