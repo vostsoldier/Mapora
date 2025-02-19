@@ -97,15 +97,33 @@ router.put('/:id', authenticateToken, async (req, res) => {
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
     const canvas = await Canvas.findById(req.params.id);
-    if (!canvas) return res.status(404).json({ message: 'Canvas not found' });
-    if (canvas.userId !== req.user.userId) { 
-      return res.status(403).json({ message: 'Access forbidden' });
+    if (!canvas) {
+      return res.status(404).json({ message: 'Canvas not found' });
     }
-    const deletedCanvas = await Canvas.findByIdAndDelete(req.params.id);
-    if (!deletedCanvas) return res.status(404).json({ message: 'Canvas not found' });
-    res.json({ message: 'Canvas deleted successfully' });
+    if (canvas.userId.toString() === req.user.userId.toString()) {
+      await canvas.deleteOne();
+      return res.json({ message: 'Canvas deleted successfully' });
+    } else {
+      const Invitation = require('../models/Invitation');
+      const normalizedEmail = req.user.email.toLowerCase().trim();
+      const invitation = await Invitation.findOneAndUpdate(
+        {
+          canvasId: canvas._id,
+          inviteeEmail: normalizedEmail,
+          status: 'accepted'
+        },
+        { status: 'removed' },
+        { new: true }
+      );
+      if (invitation) {
+        return res.json({ message: 'Canvas removed from your list' });
+      } else {
+        return res.status(403).json({ message: 'Access forbidden' });
+      }
+    }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error deleting canvas:', error);
+    res.status(500).json({ message: 'Server error deleting canvas' });
   }
 });
 
