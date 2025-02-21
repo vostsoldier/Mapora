@@ -15,6 +15,8 @@ import api from './api/apiWrapper';
 import 'reactflow/dist/style.css';
 import './App.css';
 import debounce from 'lodash.debounce';
+import html2canvas from 'html2canvas';
+
 const TextboxNode = ({ data, id, updateNode }) => {
   const { text } = data;
   const [isEditing, setIsEditing] = useState(false);
@@ -217,6 +219,7 @@ function Canvas() {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [shareMessage, setShareMessage] = useState('');
+  const canvasContainerRef = useRef(null);
   const nodeTypes = useMemo(() => ({
     textbox: TextboxNode,
     box: Box,
@@ -614,6 +617,20 @@ function Canvas() {
     updateNode(node.id, { position: { ...node.position } });
   }, [updateNode]);
 
+  const exportAsPNG = useCallback(() => {
+    if (canvasContainerRef.current) {
+      html2canvas(canvasContainerRef.current).then((canvas) => {
+        const dataUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = `canvas_${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+    }
+  }, []);
+
   return (
     <ReactFlowProvider>
       <div className="wrapper">
@@ -629,6 +646,9 @@ function Canvas() {
               </button>
               <button className="btn share" onClick={() => setShareModalOpen(true)}>
                 Share Canvas
+              </button>
+              <button className="btn" onClick={exportAsPNG}>
+                Export PNG
               </button>
               <button className="btn cancel" onClick={handleLogout}>
                 Logout
@@ -713,7 +733,7 @@ function Canvas() {
               </div>
             </div>
           )}
-          <div className="react-flow-wrapper">
+          <div className="react-flow-wrapper" ref={canvasContainerRef}>
             <ReactFlow
               nodes={nodes}
               edges={edges}
