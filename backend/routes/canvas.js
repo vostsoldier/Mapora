@@ -1,23 +1,50 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
 const router = express.Router();
 const Canvas = require('../models/Canvas');
 const authenticateToken = require('../middleware/auth');
 
-router.get('/', async (req, res) => {
+router.get('/', authenticateToken, async (req, res) => {
   try {
-    const canvases = await Canvas.find().lean();
+    const ownCanvases = await Canvas.find({ userId: req.user.userId });
+    const normalizedEmail = req.user.email.toLowerCase().trim();
+    const Invitation = require('../models/Invitation');
+    const acceptedInvitations = await Invitation.find({
+      inviteeEmail: normalizedEmail,
+      status: 'accepted'
+    });
+    const sharedCanvasIds = acceptedInvitations.map(inv => inv.canvasId);
+    const sharedCanvases = await Canvas.find({
+      _id: { $in: sharedCanvasIds }
+    });
+    const canvasesMap = {};
+    [...ownCanvases, ...sharedCanvases].forEach(canvas => {
+      canvasesMap[canvas._id] = canvas;
+    });
+    const canvases = Object.values(canvasesMap);
+    
     res.json(canvases);
   } catch (error) {
-    console.error('Error fetching canvases:', error);
-    res.status(500).json({ message: 'Error fetching canvases' });
+    res.status(500).json({ message: error.message });
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', authenticateToken, async (req, res) => {
   try {
     const canvas = await Canvas.findById(req.params.id);
     if (!canvas) return res.status(404).json({ message: 'Canvas not found' });
+    if (canvas.userId.toString() === req.user.userId.toString()) {
+      return res.json(canvas);
+    }
+    const normalizedEmail = req.user.email.toLowerCase().trim();
+    const Invitation = require('../models/Invitation');
+    const invitation = await Invitation.findOne({
+      canvasId: canvas._id,
+      inviteeEmail: normalizedEmail,
+      status: 'accepted'
+    });
+    if (!invitation) {
+      return res.status(403).json({ message: 'Access forbidden' });
+    }
     res.json(canvas);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -25,18 +52,16 @@ router.get('/:id', async (req, res) => {
 });
 
 router.post('/', authenticateToken, async (req, res) => {
-  const { name, description } = req.body;
-  if (!name) return res.status(400).json({ message: 'Canvas name is required' });
-  
-  const canvas = new Canvas({
-    userId: req.user.userId,
-    name,
-    description: description || '',
-    nodes: [],
-    edges: []
-  });
-  
   try {
+    const { name, description } = req.body;
+    if (!name) return res.status(400).json({ message: 'Canvas name is required' });
+    const canvas = new Canvas({
+      userId: req.user.userId,
+      name,
+      description: description || '',
+      nodes: [],
+      edges: []
+    });
     const savedCanvas = await canvas.save();
     res.status(201).json(savedCanvas);
   } catch (error) {
@@ -45,23 +70,60 @@ router.post('/', authenticateToken, async (req, res) => {
   }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', authenticateToken, async (req, res) => {
   try {
+    const canvas = await Canvas.findById(req.params.id);
+    if (!canvas) return res.status(404).json({ message: 'Canvas not found' });
+    if (canvas.userId.toString() !== req.user.userId.toString()) {
+      const normalizedEmail = req.user.email.toLowerCase().trim();
+      const Invitation = require('../models/Invitation');
+      const invitation = await Invitation.findOne({
+        canvasId: canvas._id,
+        inviteeEmail: normalizedEmail,
+        status: 'accepted'
+      });
+      if (!invitation) {
+        return res.status(403).json({ message: 'Access forbidden' });
+      }
+    }
+    
     const updatedCanvas = await Canvas.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!updatedCanvas) return res.status(404).json({ message: 'Canvas not found' });
     res.json(updatedCanvas);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticateToken, async (req, res) => {
   try {
-    const deletedCanvas = await Canvas.findByIdAndDelete(req.params.id);
-    if (!deletedCanvas) return res.status(404).json({ message: 'Canvas not found' });
-    res.json({ message: 'Canvas deleted successfully' });
+    const canvas = await Canvas.findById(req.params.id);
+    if (!canvas) {
+      return res.status(404).json({ message: 'Canvas not found' });
+    }
+    if (canvas.userId.toString() === req.user.userId.toString()) {
+      await canvas.deleteOne();
+      return res.json({ message: 'Canvas deleted successfully' });
+    } else {
+      const Invitation = require('../models/Invitation');
+      const normalizedEmail = req.user.email.toLowerCase().trim();
+      const invitation = await Invitation.findOneAndUpdate(
+        {
+          canvasId: canvas._id,
+          inviteeEmail: normalizedEmail,
+          status: 'accepted'
+        },
+        { status: 'removed' },
+        { new: true }
+      );
+      if (invitation) {
+        return res.json({ message: 'Canvas removed from your list' });
+      } else {
+        return res.status(403).json({ message: 'Access forbidden' });
+      }
+    }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error deleting canvas:', error);
+    res.status(500).json({ message: 'Server error deleting canvas' });
   }
 });
 

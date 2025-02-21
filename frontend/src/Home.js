@@ -35,16 +35,16 @@ function Home({ onLogin }) {
     <div className="home-container">
       <nav className="navbar">
         <div className="logo-title">
-          <span className="title">Think Tree</span>
+          <span className="title">Mapora</span>
         </div>
         <div className="nav-links">
           <Link to="/features">Features</Link>
           <Link to="/about">About</Link>
-          <Link to="/contact">Contact</Link>
+          <Link to="/pricing">Pricing</Link>
         </div>
       </nav>
       <header className="hero-section">
-        <h1 className="product-name">Think Tree</h1>
+        <h1 className="product-name">Mapora</h1>
         <p className="tagline">Organize your thoughts and ideas seamlessly.</p>
         <div className="button-group">
           {!isAuthenticated && (
@@ -90,9 +90,9 @@ function Home({ onLogin }) {
 
         <FadeInSection>
           <section className="about-section">
-            <h2>About Think Tree</h2>
+            <h2>About Mapora</h2>
             <p>
-              Think Tree is a powerful tool designed to help you organize your thoughts, collaborate with others, and visualize complex ideas effortlessly. Whether you're brainstorming solo or working with a team, Think Tree provides the features you need to bring your ideas to life.
+              Mapora is a powerful tool designed to help you organize your thoughts, collaborate with others, and visualize complex ideas effortlessly. Whether you're brainstorming solo or working with a team, Think Tree provides the features you need to bring your ideas to life.
             </p>
           </section>
         </FadeInSection>
@@ -102,11 +102,11 @@ function Home({ onLogin }) {
             <h2>What Our Users Say</h2>
             <div className="testimonials">
               <div className="testimonial-item">
-                <p>"Think Tree has transformed the way I organize my projects. It's intuitive and incredibly powerful."</p>
+                <p>"Mapora has transformed the way I organize my projects. It's intuitive and incredibly powerful."</p>
                 <h4>- Jane Doe</h4>
               </div>
               <div className="testimonial-item">
-                <p>"Collaborating with my team has never been easier. Think Tree keeps us all on the same page."</p>
+                <p>"Collaborating with my team has never been easier. Mapora keeps us all on the same page."</p>
                 <h4>- John Smith</h4>
               </div>
             </div>
@@ -115,7 +115,7 @@ function Home({ onLogin }) {
       </main>
 
       <footer className="footer">
-        <p>&copy; 2024 Think Tree. All rights reserved.</p>
+        <p>&copy; 2024 Mapora. All rights reserved.</p>
       </footer>
     </div>
   );

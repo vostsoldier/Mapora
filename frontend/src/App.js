@@ -24,6 +24,8 @@ import { Routes, Route, Link, useNavigate, Navigate } from 'react-router-dom';
 import api from './api/apiWrapper'; 
 import { motion, AnimatePresence } from 'framer-motion';
 import Toast from './components/Toast';
+import Pricing from './Pricing';
+import Purchase from './Purchase';
 const COLOR_PRESETS = [
   { name: 'Green', value: '#10B981' },
   { name: 'Red', value: '#EF4444' },
@@ -879,7 +881,7 @@ function App() {
                   <Sidebar onAddBox={handleAddBox} />
                   <div className="main">
                     <header className="App-header">
-                      <Link to="/" className="page-title"><h1>Think Tree</h1></Link>
+                      <Link to="/" className="page-title"><h1>Mapora</h1></Link>
                       <div className="button-container">
                         <button className="btn" onClick={() => setIsAdding(true)}>
                           Add Node
@@ -1168,6 +1170,8 @@ function App() {
               <About />
             </motion.div>
           } />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/purchase" element={<Purchase />} />
         </Routes>
       </AnimatePresence>
     </ReactFlowProvider>

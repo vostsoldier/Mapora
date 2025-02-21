@@ -12,6 +12,12 @@ function Members({ addToast }) {
   const [isCreating, setIsCreating] = useState(false);
   const [newCanvasName, setNewCanvasName] = useState('');
   const [newCanvasDescription, setNewCanvasDescription] = useState('');
+  const [menuCanvasId, setMenuCanvasId] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingCanvasId, setEditingCanvasId] = useState(null);
+  const [editedCanvasName, setEditedCanvasName] = useState('');
+  const [invitations, setInvitations] = useState([]);
+  const authToken = localStorage.getItem('token');
 
   useEffect(() => {
     loadCanvases();
@@ -24,6 +30,21 @@ function Members({ addToast }) {
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
   }, []);
+
+  useEffect(() => {
+    const loadInvitations = async () => {
+      try {
+        const response = await api.get('/invitations', {
+          headers: { Authorization: `Bearer ${authToken}` }
+        });
+        setInvitations(response.data);
+      } catch (error) {
+        console.error('Error loading invitations:', error);
+        addToast('Failed to load invitations', 'error');
+      }
+    };
+    loadInvitations();
+  }, [authToken, addToast]);
 
   const loadCanvases = async () => {
     try {
@@ -56,6 +77,48 @@ function Members({ addToast }) {
     }
   };
 
+  const handleDeleteCanvas = async (canvasId) => {
+    try {
+      await api.delete(`/canvas/${canvasId}`);
+      setCanvases(canvases.filter((canvas) => canvas._id !== canvasId));
+      addToast?.('Canvas deleted successfully', 'success');
+    } catch (error) {
+      console.error('Error deleting canvas:', error);
+      addToast?.('Failed to delete canvas', 'error');
+    }
+    setMenuCanvasId(null);
+  };
+
+  const handleOpenEdit = (canvas) => {
+    setEditingCanvasId(canvas._id);
+    setEditedCanvasName(canvas.name);
+    setIsEditing(true);
+    setMenuCanvasId(null);
+  };
+
+  const handleEditCanvas = async () => {
+    if (!editedCanvasName.trim()) {
+      addToast?.('Canvas name cannot be empty', 'error');
+      return;
+    }
+    try {
+      const response = await api.put(`/canvas/${editingCanvasId}`, { name: editedCanvasName });
+      const updatedCanvas = response.data;
+      setCanvases(
+        canvases.map((canvas) =>
+          canvas._id === editingCanvasId ? updatedCanvas : canvas
+        )
+      );
+      addToast?.('Canvas updated successfully', 'success');
+    } catch (error) {
+      console.error('Error updating canvas:', error);
+      addToast?.('Failed to update canvas', 'error');
+    }
+    setIsEditing(false);
+    setEditingCanvasId(null);
+    setEditedCanvasName('');
+  };
+
   const navigateToCanvas = (canvasId) => {
     navigate(`/app/${canvasId}`);
   };
@@ -65,6 +128,30 @@ function Members({ addToast }) {
     localStorage.removeItem('isDemo');
     navigate('/', { replace: true });
     window.location.reload();
+  };
+
+  const handleAccept = async (invitationId) => {
+    try {
+      await api.put(`/invitations/${invitationId}/accept`, {}, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      setInvitations(invitations.filter(inv => inv._id !== invitationId));
+      addToast('Invitation accepted', 'success');
+    } catch (error) {
+      addToast('Failed to accept invitation', 'error');
+    }
+  };
+
+  const handleReject = async (invitationId) => {
+    try {
+      await api.delete(`/invitations/${invitationId}`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      setInvitations(invitations.filter(inv => inv._id !== invitationId));
+      addToast('Invitation rejected', 'success');
+    } catch (error) {
+      addToast('Failed to reject invitation', 'error');
+    }
   };
 
   return (
@@ -77,7 +164,7 @@ function Members({ addToast }) {
     >
       <nav className="dashboard-sidebar">
         <div className="logo-section">
-          <Link to="/" className="dashboard-logo">Think Tree</Link>
+          <Link to="/" className="dashboard-logo">Mapora</Link>
         </div>
         <div className="nav-sections">
           <button 
@@ -109,9 +196,6 @@ function Members({ addToast }) {
           <section className="projects-section">
             <div className="section-header">
               <h1>Your Projects</h1>
-              <button className="new-project-btn" onClick={() => navigate('/app')}>
-                New Project
-              </button>
             </div>
             <div className="projects-grid">
               <div 
@@ -125,10 +209,36 @@ function Members({ addToast }) {
                 </div>
               </div>
               {canvases.map((canvas) => (
-                <div key={canvas._id} className="project-card" onClick={() => navigateToCanvas(canvas._id)}>
-                  <h3>{canvas.name}</h3>
-                  <p>{canvas.description}</p>
-                  <p>Created: {new Date(canvas.createdAt).toLocaleDateString()}</p>
+                <div key={canvas._id} className="project-card">
+                  <div 
+                    className="project-card-content" 
+                    onClick={() => navigateToCanvas(canvas._id)}
+                  >
+                    <h3>{canvas.name}</h3>
+                    <p>{canvas.description}</p>
+                    <p>Created: {new Date(canvas.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <div className="project-card-menu">
+                    <button onClick={() => setMenuCanvasId(canvas._id)}>
+                      &#8942;
+                    </button>
+                    {menuCanvasId === canvas._id && (
+                      <div className="menu-dropdown">
+                        <div 
+                          className="menu-item" 
+                          onClick={() => handleOpenEdit(canvas)}
+                        >
+                          Edit
+                        </div>
+                        <div 
+                          className="menu-item" 
+                          onClick={() => handleDeleteCanvas(canvas._id)}
+                        >
+                          Delete
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -154,6 +264,23 @@ function Members({ addToast }) {
                 </div>
               </div>
             )}
+            {isEditing && (
+              <div className="modal" onClick={() => setIsEditing(false)}>
+                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                  <h2>Edit Canvas Name</h2>
+                  <input
+                    type="text"
+                    value={editedCanvasName}
+                    onChange={(e) => setEditedCanvasName(e.target.value)}
+                    placeholder="Enter new canvas name"
+                  />
+                  <div className="modal-actions">
+                    <button onClick={handleEditCanvas}>Save</button>
+                    <button onClick={() => setIsEditing(false)}>Cancel</button>
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
         )}
 
@@ -168,6 +295,20 @@ function Members({ addToast }) {
             <h1>Settings</h1>
           </section>
         )}
+
+        <section className="invitations-section">
+          <h2>Invitations</h2>
+          {invitations.length === 0 && <p>No pending invitations.</p>}
+          {invitations.map(inv => (
+            <div key={inv._id} className="invitation-item">
+              <p>
+                You have been invited to collaborate on canvas ID: {inv.canvasId}
+              </p>
+              <button onClick={() => handleAccept(inv._id)}>Accept</button>
+              <button onClick={() => handleReject(inv._id)}>Reject</button>
+            </div>
+          ))}
+        </section>
       </main>
     </motion.div>
   );

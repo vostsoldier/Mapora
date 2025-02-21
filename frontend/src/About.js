@@ -16,13 +16,13 @@ function About() {
       <nav className="navbar">
         <div className="logo-title">
           <Link to="/" style={{ textDecoration: 'none', color: 'white' }}>
-            <span className="title">Think Tree</span>
+            <span className="title">Mapora</span>
           </Link>
         </div>
         <div className="nav-links">
           <Link to="/">Home</Link>
           <Link to="/features">Features</Link>
-          <Link to="/contact">Contact</Link>
+          <Link to="/pricing">Pricing</Link>
         </div>
       </nav>
 
@@ -72,7 +72,7 @@ function About() {
       </main>
 
       <footer className="footer">
-        <p>&copy; 2024 Think Tree. All rights reserved.</p>
+        <p>&copy; 2024 Mapora. All rights reserved.</p>
       </footer>
     </motion.div>
   );
