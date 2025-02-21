@@ -15,9 +15,8 @@ import api from './api/apiWrapper';
 import 'reactflow/dist/style.css';
 import './App.css';
 import debounce from 'lodash.debounce';
-
-const TextboxNode = ({ data, id }) => {
-  const { text, setNodes } = data;
+const TextboxNode = ({ data, id, updateNode }) => {
+  const { text } = data;
   const [isEditing, setIsEditing] = useState(false);
   const textRef = useRef(null);
 
@@ -29,41 +28,37 @@ const TextboxNode = ({ data, id }) => {
 
   const handleBlur = (e) => {
     const newText = e.target.innerText;
-    if (typeof setNodes === 'function') {
-      setNodes((nds) =>
-        nds.map((node) =>
-          node.id === id ? { ...node, data: { ...node.data, text: newText } } : node
-        )
-      );
+    if (typeof updateNode === 'function') {
+      updateNode(id, { data: { ...data, text: newText } });
     }
     setIsEditing(false);
   };
 
   return (
-    <div
-      onDoubleClick={handleDoubleClick}
-      onContextMenu={(e) => {
-        e.preventDefault();
-      }}
-      onMouseDown={(e) => {
-        if (isEditing && e.button === 0) {
-          e.stopPropagation();
-        }
-      }}
-    >
-      <div
-        ref={textRef}
-        contentEditable={isEditing}
-        suppressContentEditableWarning
-        onBlur={handleBlur}
-        style={{ outline: 'none' }}
-      >
-        {text}
-      </div>
+    <div onDoubleClick={handleDoubleClick}>
+      {isEditing ? (
+        <div
+          ref={textRef}
+          contentEditable
+          suppressContentEditableWarning
+          onBlur={handleBlur}
+          style={{
+            padding: '4px',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            outline: 'none',      
+            transition: 'none',    
+            animation: 'none'      
+          }}
+        >
+          {text}
+        </div>
+      ) : (
+        <div>{text || 'Double-click to edit'}</div>
+      )}
     </div>
   );
 };
-
 const Box = ({ data, id, setNodes, nodes }) => {
   const [dimensions, setDimensions] = useState({
     width: data.width || 150,
@@ -245,7 +240,7 @@ function Canvas() {
           id: node.id,
           data:
             node.type === 'textbox'
-              ? { text: node.text || '', setNodes } 
+              ? { text: node.text || '' } 
               : { label: node.label || '' },
           position: node.position,
           type: node.type,
@@ -344,12 +339,9 @@ function Canvas() {
     const newTextboxNode = {
       id: `temp-textbox-${Date.now()}`,
       type: 'textbox',
-      data: { 
-        text: 'New Text', 
-        setNodes, 
-        nodes   
-      },
+      data: { text: 'New Text' },
       position: { x: Math.random() * 250, y: Math.random() * 250 },
+      style: {},
     };
     
     setNodes((nds) => [...nds, newTextboxNode]);
@@ -604,6 +596,24 @@ function Canvas() {
     }
   };
 
+  const updateNode = useCallback((nodeId, updatedProperties) => {
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === nodeId ? { ...node, ...updatedProperties } : node
+      )
+    );
+  }, [setNodes]);
+
+  const customNodeTypes = useMemo(() => ({
+    textbox: (props) => <TextboxNode {...props} updateNode={updateNode} />,
+    box: (props) => <Box {...props} setNodes={setNodes} />, 
+  }), [updateNode, setNodes]);
+
+  const onNodeDragStopHandler = useCallback((event, node) => {
+    console.log(`Node ${node.id} dragged to:`, node.position);
+    updateNode(node.id, { position: { ...node.position } });
+  }, [updateNode]);
+
   return (
     <ReactFlowProvider>
       <div className="wrapper">
@@ -707,21 +717,11 @@ function Canvas() {
             <ReactFlow
               nodes={nodes}
               edges={edges}
-              nodeTypes={nodeTypes}
+              nodeTypes={customNodeTypes}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnectHandler}
-              onNodeContextMenu={onNodeContextMenu}
-              onEdgeClick={(event, edge) => {
-                event.preventDefault();
-                event.stopPropagation();
-                setSelectedEdge(edge);
-                setEdgeContextMenu({
-                  mouseX: event.clientX - 2,
-                  mouseY: event.clientY - 4,
-                });
-                setContextMenu(null);
-              }}
+              onNodeDragStop={onNodeDragStopHandler}  
               fitView
             >
               <MiniMap />
