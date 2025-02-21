@@ -220,6 +220,8 @@ function Canvas() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [shareMessage, setShareMessage] = useState('');
   const canvasContainerRef = useRef(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [fadeOut, setFadeOut] = useState(false);
   const nodeTypes = useMemo(() => ({
     textbox: TextboxNode,
     box: Box,
@@ -235,6 +237,7 @@ function Canvas() {
   };
   useEffect(() => {
     const fetchCanvas = async () => {
+      const startTime = Date.now();
       try {
         if (!canvasId) return;
         const response = await api.get(`/canvas/${canvasId}`);
@@ -252,6 +255,17 @@ function Canvas() {
         setEdges(canvasData.edges);
       } catch (error) {
         console.error('Error fetching canvas:', error);
+      } finally {
+        const elapsed = Date.now() - startTime;
+        const remainingDelay = 3000; 
+        console.log('Elapsed time:', elapsed, 'ms. Remaining delay:', remainingDelay, 'ms.');
+        setTimeout(() => {
+          setFadeOut(true);
+          setTimeout(() => {
+            setIsLoading(false);
+            console.log('Loading complete, hiding loader.');
+          }, 1000);
+        }, remainingDelay);
       }
     };
     fetchCanvas();
@@ -733,22 +747,29 @@ function Canvas() {
               </div>
             </div>
           )}
-          <div className="react-flow-wrapper" ref={canvasContainerRef}>
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              nodeTypes={customNodeTypes}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnectHandler}
-              onNodeDragStop={onNodeDragStopHandler}  
-              fitView
-            >
-              <MiniMap />
-              <Controls />
-              <Background />
-            </ReactFlow>
-          </div>
+          {isLoading ? (
+            <div className={`loading-screen ${fadeOut ? 'fade-out' : ''}`}>
+              <div className="loading-spinner"></div>
+              <div className="loading-text">Loading Canvas...</div>
+            </div>
+          ) : (
+            <div className="react-flow-wrapper" ref={canvasContainerRef}>
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                nodeTypes={customNodeTypes}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnectHandler}
+                onNodeDragStop={onNodeDragStopHandler}  
+                fitView
+              >
+                <MiniMap />
+                <Controls />
+                <Background />
+              </ReactFlow>
+            </div>
+          )}
           {contextMenu && (
             <div
               className="context-menu"
