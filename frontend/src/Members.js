@@ -64,16 +64,15 @@ function Members({ addToast }) {
         description: newCanvasDescription 
       });
       const createdCanvas = response.data;
-      const id = createdCanvas._id || createdCanvas.canvasId;
-      if (!id) {
-        console.warn('Canvas id is missing:', response.data);
-        return;
-      }
       setCanvases((prev) => [...prev, createdCanvas]);
-      navigate(`/app/${id}`);
+      navigate(`/app/${createdCanvas._id || createdCanvas.canvasId}`);
     } catch (error) {
+      if (error.response && error.response.status === 403) {
+        addToast('Canvas limit reached: Only 3 canvases allowed on the free plan.', 'error');
+      } else {
+        addToast('Error creating canvas.', 'error');
+      }
       console.error('Error creating canvas:', error);
-      addToast?.('Failed to create canvas', 'error');
     }
   };
 

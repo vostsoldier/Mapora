@@ -50,47 +50,59 @@ router.get('/:id', authenticateToken, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-
 router.post('/', authenticateToken, async (req, res) => {
   try {
+    const userId = req.user.userId;
+    const existingCount = await Canvas.countDocuments({ userId });
+    if (existingCount >= 3) {
+      return res.status(403).json({ message: 'Free plan limit reached: Only 3 canvases allowed.' });
+    }
+    
     const { name, description } = req.body;
-    if (!name) return res.status(400).json({ message: 'Canvas name is required' });
+    if (!name) {
+      return res.status(400).json({ message: 'Canvas name is required' });
+    }
+    
     const canvas = new Canvas({
-      userId: req.user.userId,
+      userId,
       name,
       description: description || '',
       nodes: [],
       edges: []
     });
+
     const savedCanvas = await canvas.save();
     res.status(201).json(savedCanvas);
   } catch (error) {
     console.error('Error creating canvas:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Server error creating canvas' });
   }
 });
-
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const canvas = await Canvas.findById(req.params.id);
-    if (!canvas) return res.status(404).json({ message: 'Canvas not found' });
-    if (canvas.userId.toString() !== req.user.userId.toString()) {
-      const normalizedEmail = req.user.email.toLowerCase().trim();
-      const Invitation = require('../models/Invitation');
-      const invitation = await Invitation.findOne({
-        canvasId: canvas._id,
-        inviteeEmail: normalizedEmail,
-        status: 'accepted'
-      });
-      if (!invitation) {
-        return res.status(403).json({ message: 'Access forbidden' });
-      }
+    if (!canvas) {
+      return res.status(404).json({ message: 'Canvas not found' });
     }
-    
-    const updatedCanvas = await Canvas.findByIdAndUpdate(req.params.id, req.body, { new: true });
+
+    const nodes = req.body.nodes || [];
+    const edges = req.body.edges || [];
+    const totalModels = nodes.length + edges.length;
+
+    if (totalModels > 75) {
+      return res.status(403).json({
+        message: 'Free plan limit exceeded: Only 75 models allowed per canvas.'
+      });
+    }
+
+    canvas.nodes = nodes;
+    canvas.edges = edges;
+
+    const updatedCanvas = await canvas.save();
     res.json(updatedCanvas);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error('Error saving canvas:', error);
+    res.status(500).json({ message: 'Server error saving canvas' });
   }
 });
 

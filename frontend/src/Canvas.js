@@ -308,8 +308,17 @@ function Canvas() {
   
     try {
       await api.put(`/canvas/${canvasId}`, payload);
-      console.log('Canvas saved successfully.');
+      addToast('Canvas saved successfully.', 'success');
     } catch (error) {
+      if (error.response && error.response.status === 403) {
+        if (error.response.data.message.includes('75 models')) {
+          addToast('Model limit reached: Only 75 models allowed per canvas.', 'error');
+        } else {
+          addToast(error.response.data.message, 'error');
+        }
+      } else {
+        addToast('Error saving canvas.', 'error');
+      }
       console.error('Error saving canvas:', error);
     }
   }, [nodes, edges, canvasId]);
