@@ -16,6 +16,7 @@ import 'reactflow/dist/style.css';
 import './App.css';
 import debounce from 'lodash.debounce';
 import html2canvas from 'html2canvas';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const TextboxNode = ({ data, id, updateNode }) => {
   const { text } = data;
@@ -222,6 +223,7 @@ function Canvas() {
   const canvasContainerRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
   const [fadeOut, setFadeOut] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const nodeTypes = useMemo(() => ({
     textbox: TextboxNode,
     box: Box,
@@ -281,6 +283,7 @@ function Canvas() {
       console.warn('No canvasId available. Skipping update.');
       return;
     }
+    setIsSaving(true);
     
     const payload = {
       nodes: (nodes || []).map((node) => ({
@@ -308,7 +311,6 @@ function Canvas() {
   
     try {
       await api.put(`/canvas/${canvasId}`, payload);
-      addToast('Canvas saved successfully.', 'success');
     } catch (error) {
       if (error.response && error.response.status === 403) {
         if (error.response.data.message.includes('75 models')) {
@@ -320,6 +322,10 @@ function Canvas() {
         addToast('Error saving canvas.', 'error');
       }
       console.error('Error saving canvas:', error);
+    } finally {
+      setTimeout(() => {
+        setIsSaving(false);
+      }, 1000);
     }
   }, [nodes, edges, canvasId]);
 
@@ -678,6 +684,19 @@ function Canvas() {
               </button>
             </div>
           </header>
+          <AnimatePresence>
+            {isSaving && (
+              <motion.div
+                className="saving-indicator"
+                initial={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="saving-dot"></div>
+                Saving...
+              </motion.div>
+            )}
+          </AnimatePresence>
           {isAdding && (
             <div className="modal" onClick={() => setIsAdding(false)}>
               <div className="modal-content" onClick={(e) => e.stopPropagation()}>
