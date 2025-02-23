@@ -416,12 +416,12 @@ function Canvas() {
   const onNodeContextMenu = useCallback((event, node) => {
     event.preventDefault();
     event.stopPropagation();
+    setEdgeContextMenu(null);
     setSelectedNode(node);
     setContextMenu({
-      mouseX: event.clientX - 2,
-      mouseY: event.clientY - 4,
+      mouseX: event.clientX,
+      mouseY: event.clientY,
     });
-    setEdgeContextMenu(null);
   }, []);
   const handleDelete = () => {
     if (selectedNode) {
@@ -794,6 +794,26 @@ function Canvas() {
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnectHandler}
                 onNodeDragStop={onNodeDragStopHandler}  
+                onNodeContextMenu={(event, node) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setEdgeContextMenu(null);
+                  setSelectedNode(node);
+                  setContextMenu({
+                    mouseX: event.clientX,
+                    mouseY: event.clientY,
+                  });
+                }}
+                onEdgeContextMenu={(event, edge) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setContextMenu(null);
+                  setSelectedEdge(edge);
+                  setEdgeContextMenu({
+                    mouseX: event.clientX,
+                    mouseY: event.clientY,
+                  });
+                }}
                 fitView
               >
                 <MiniMap />
