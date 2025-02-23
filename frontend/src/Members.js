@@ -46,6 +46,14 @@ function Members({ addToast }) {
     loadInvitations();
   }, [authToken, addToast]);
 
+  useEffect(() => {
+    const handleDocumentClick = () => {
+      setMenuCanvasId(null);
+    };
+    document.addEventListener('click', handleDocumentClick);
+    return () => document.removeEventListener('click', handleDocumentClick);
+  }, []);
+
   const loadCanvases = async () => {
     try {
       const response = await api.get('/canvas');
@@ -208,7 +216,7 @@ function Members({ addToast }) {
                 </div>
               </div>
               {canvases.map((canvas) => (
-                <div key={canvas._id} className="project-card">
+                <div key={canvas._id} className="project-card" style={{ position: 'relative' }}>
                   <div 
                     className="project-card-content" 
                     onClick={() => navigateToCanvas(canvas._id)}
@@ -217,8 +225,13 @@ function Members({ addToast }) {
                     <p>{canvas.description}</p>
                     <p>Created: {new Date(canvas.createdAt).toLocaleDateString()}</p>
                   </div>
-                  <div className="project-card-menu">
-                    <button onClick={() => setMenuCanvasId(canvas._id)}>
+                  <div className="project-card-menu" style={{ position: 'absolute', right: '10px', top: '10px' }}>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMenuCanvasId(canvas._id);
+                      }}
+                    >
                       &#8942;
                     </button>
                     {menuCanvasId === canvas._id && (

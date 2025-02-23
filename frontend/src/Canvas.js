@@ -238,6 +238,11 @@ function Canvas() {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   };
   useEffect(() => {
+    if (localStorage.getItem('skipCanvasLoader') === 'true') {
+      setIsLoading(false);
+      localStorage.removeItem('skipCanvasLoader');
+      return; 
+    }
     const fetchCanvas = async () => {
       const startTime = Date.now();
       try {
@@ -265,7 +270,6 @@ function Canvas() {
           setFadeOut(true);
           setTimeout(() => {
             setIsLoading(false);
-            console.log('Loading complete, hiding loader.');
           }, 1000);
         }, remainingDelay);
       }
