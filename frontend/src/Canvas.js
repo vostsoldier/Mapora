@@ -16,6 +16,7 @@ import 'reactflow/dist/style.css';
 import './App.css';
 import debounce from 'lodash.debounce';
 import html2canvas from 'html2canvas';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const TextboxNode = ({ data, id, updateNode }) => {
   const { text } = data;
@@ -222,6 +223,7 @@ function Canvas() {
   const canvasContainerRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
   const [fadeOut, setFadeOut] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const nodeTypes = useMemo(() => ({
     textbox: TextboxNode,
     box: Box,
@@ -236,6 +238,11 @@ function Canvas() {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   };
   useEffect(() => {
+    if (localStorage.getItem('skipCanvasLoader') === 'true') {
+      setIsLoading(false);
+      localStorage.removeItem('skipCanvasLoader');
+      return; 
+    }
     const fetchCanvas = async () => {
       const startTime = Date.now();
       try {
@@ -263,7 +270,6 @@ function Canvas() {
           setFadeOut(true);
           setTimeout(() => {
             setIsLoading(false);
-            console.log('Loading complete, hiding loader.');
           }, 1000);
         }, remainingDelay);
       }
@@ -281,6 +287,7 @@ function Canvas() {
       console.warn('No canvasId available. Skipping update.');
       return;
     }
+    setIsSaving(true);
     
     const payload = {
       nodes: (nodes || []).map((node) => ({
@@ -308,9 +315,21 @@ function Canvas() {
   
     try {
       await api.put(`/canvas/${canvasId}`, payload);
-      console.log('Canvas saved successfully.');
     } catch (error) {
+      if (error.response && error.response.status === 403) {
+        if (error.response.data.message.includes('75 models')) {
+          addToast('Model limit reached: Only 75 models allowed per canvas.', 'error');
+        } else {
+          addToast(error.response.data.message, 'error');
+        }
+      } else {
+        addToast('Error saving canvas.', 'error');
+      }
       console.error('Error saving canvas:', error);
+    } finally {
+      setTimeout(() => {
+        setIsSaving(false);
+      }, 1000);
     }
   }, [nodes, edges, canvasId]);
 
@@ -397,12 +416,12 @@ function Canvas() {
   const onNodeContextMenu = useCallback((event, node) => {
     event.preventDefault();
     event.stopPropagation();
+    setEdgeContextMenu(null);
     setSelectedNode(node);
     setContextMenu({
-      mouseX: event.clientX - 2,
-      mouseY: event.clientY - 4,
+      mouseX: event.clientX,
+      mouseY: event.clientY,
     });
-    setEdgeContextMenu(null);
   }, []);
   const handleDelete = () => {
     if (selectedNode) {
@@ -669,6 +688,19 @@ function Canvas() {
               </button>
             </div>
           </header>
+          <AnimatePresence>
+            {isSaving && (
+              <motion.div
+                className="saving-indicator"
+                initial={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="saving-dot"></div>
+                Saving...
+              </motion.div>
+            )}
+          </AnimatePresence>
           {isAdding && (
             <div className="modal" onClick={() => setIsAdding(false)}>
               <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -762,6 +794,26 @@ function Canvas() {
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnectHandler}
                 onNodeDragStop={onNodeDragStopHandler}  
+                onNodeContextMenu={(event, node) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setEdgeContextMenu(null);
+                  setSelectedNode(node);
+                  setContextMenu({
+                    mouseX: event.clientX,
+                    mouseY: event.clientY,
+                  });
+                }}
+                onEdgeContextMenu={(event, edge) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setContextMenu(null);
+                  setSelectedEdge(edge);
+                  setEdgeContextMenu({
+                    mouseX: event.clientX,
+                    mouseY: event.clientY,
+                  });
+                }}
                 fitView
               >
                 <MiniMap />
